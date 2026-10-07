@@ -34,7 +34,9 @@
   .who { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--muted); }
 
   /* diagonal motif */
-  .motif { position: fixed; right: 0; top: 0; width: 34vw; max-width: 460px; height: 100vh; z-index: 0; pointer-events: none; opacity: .9; }
+  .motif { position: absolute; right: 0; top: 0; width: 30vw; max-width: 420px; height: 560px; z-index: 0; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
+  @media (max-width: 1240px) { .motif { width: 22vw; } }
   @media (max-width: 900px) { .motif { display: none; } }
   main { position: relative; z-index: 1; padding-bottom: 140px; }
 
