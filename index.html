@@ -1,1 +1,362 @@
-<!doctype html><meta charset="utf-8"><title>Alloy Partners intros</title><p>Coming soon.</p>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Investor Intros · Alloy Partners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ultramarine: #2929E2; --sapphire: #12127A; --ink: #14142B; --muted: #5C5C7A; --line: #E3E3EE;
+    --bg: #F7F7FB; --card: #FFFFFF; --soft: #EEF0FF; --ok: #157F4B; --warn: #A15C00; --bad: #B42318;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "DM Sans", system-ui, sans-serif; }
+  a { color: var(--ultramarine); }
+  header { background: var(--sapphire); color: #fff; padding: 18px 16px; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  header .who { font-size: 13px; opacity: .85; }
+  header button { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  main { padding: 24px 0 120px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  h2 { font-size: 20px; margin: 0 0 6px; }
+  h3 { font-size: 15px; margin: 18px 0 8px; color: var(--sapphire); text-transform: uppercase; letter-spacing: .6px; }
+  .lede { color: var(--muted); margin: 0 0 4px; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  .steps button { border-radius: 999px; }
+  .steps button.on { background: var(--ultramarine); color: #fff; border-color: var(--ultramarine); }
+  button, .btn { font: inherit; cursor: pointer; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-block; }
+  button.primary { background: var(--ultramarine); color: #fff; border-color: var(--ultramarine); font-weight: 500; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  input[type=email], input[type=url], textarea, select { font: inherit; width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; color: var(--ink); }
+  textarea { min-height: 150px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1.1fr 1.6fr 1fr; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .firm { font-weight: 700; font-size: 16px; }
+  .meta { font-size: 13px; color: var(--muted); }
+  .why { font-size: 14px; }
+  .pill { display: inline-block; font: 500 11px/1 "Roboto Mono", monospace; padding: 4px 8px; border-radius: 999px; background: var(--soft); color: var(--sapphire); }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button { padding: 6px 10px; font-size: 13px; }
+  .seg button.on { background: var(--ultramarine); color: #fff; border-color: var(--ultramarine); }
+  .seg button.on.in_touch, .seg button.on.passed { background: var(--muted); border-color: var(--muted); }
+  .seg button.on.skip { background: #fff; color: var(--muted); }
+  .sub { margin-top: 10px; display: grid; gap: 6px; font-size: 13px; }
+  .sub label { display: flex; gap: 6px; align-items: center; }
+  .overlap { margin-top: 10px; background: #FFF7EB; border: 1px solid #F5D9A8; border-radius: 8px; padding: 10px; font-size: 13px; }
+  .overlap .q { display: flex; gap: 6px; margin-top: 6px; }
+  .overlap button { padding: 4px 8px; font-size: 12px; }
+  .overlap button.on { background: var(--warn); color: #fff; border-color: var(--warn); }
+  .overlap button.on.fine { background: var(--ok); border-color: var(--ok); }
+  .radio { display: flex; gap: 16px; flex-wrap: wrap; margin: 6px 0 12px; }
+  .radio label { display: flex; gap: 6px; align-items: center; }
+  .email { border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; overflow: hidden; }
+  .email .head { background: var(--soft); padding: 10px 14px; font-size: 13px; }
+  .email pre { margin: 0; padding: 14px; white-space: pre-wrap; font: 14px/1.55 "DM Sans", system-ui, sans-serif; }
+  .email .foot { padding: 8px 14px 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .note { font-size: 13px; color: var(--muted); font-style: italic; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 12px 0; }
+  .bar .wrap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .status { font: 500 12px/1 "Roboto Mono", monospace; padding: 5px 8px; border-radius: 6px; background: var(--soft); color: var(--sapphire); }
+  .status.meeting, .status.accepted { background: #E6F4EC; color: var(--ok); }
+  .status.passed { background: #FDECEA; color: var(--bad); }
+  .status.waiting_on_founder { background: #FFF7EB; color: var(--warn); }
+  .empty { color: var(--muted); text-align: center; padding: 30px 0; }
+  .toast { position: fixed; top: 16px; right: 16px; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
+  .hide { display: none !important; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr; gap: 10px; } }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<header><div class="wrap"><h1>Alloy Partners · Investor Intros</h1><div><span class="who" id="who"></span> <button id="signout" class="hide">Sign out</button></div></div></header>
+
+<main class="wrap">
+  <!-- sign in -->
+  <section id="login" class="card hide" style="max-width:460px;margin:40px auto">
+    <h2>Sign in</h2>
+    <p class="lede">Enter the email Alloy has on file for you. We'll send a one-time sign-in link.</p>
+    <form id="loginForm"><input type="email" id="email" required placeholder="you@company.com" autocomplete="email"><p></p>
+      <button class="primary" type="submit">Email me a sign-in link</button></form>
+    <p id="loginMsg" class="meta"></p>
+  </section>
+
+  <section id="app" class="hide">
+    <div class="card">
+      <h2 id="title"></h2>
+      <p class="lede">These are investors someone at Alloy knows personally and thinks could fit your raise, strongest relationship first.
+        Pick the intros you want, tell us who you're already talking to, confirm your blurb, and review exactly what will be sent.
+        Nothing goes out until your Alloy connector reviews and sends it.</p>
+    </div>
+    <div class="steps">
+      <button data-step="pick" class="on">1. Choose intros</button>
+      <button data-step="blurb">2. Blurb &amp; deck</button>
+      <button data-step="review">3. Review &amp; submit</button>
+      <button data-step="track">Status</button>
+    </div>
+
+    <div id="step-pick" class="card"></div>
+
+    <div id="step-blurb" class="card hide">
+      <h2>Your blurb</h2>
+      <p class="lede">Used in every intro. We pre-filled it from what you've shared with Alloy; edit as you like.</p>
+      <textarea id="blurb"></textarea>
+      <h3>Deck</h3>
+      <div class="radio" id="deckMode">
+        <label><input type="radio" name="deck" value="link"> Share a link</label>
+        <label><input type="radio" name="deck" value="attachment"> Attach a PDF</label>
+        <label><input type="radio" name="deck" value="none"> No deck for now</label>
+      </div>
+      <div id="deckLinkBox"><input type="url" id="deckLink" placeholder="https://docsend.com/view/..."></div>
+      <div id="deckFileBox" class="hide"><input type="file" id="deckFile" accept="application/pdf"> <span id="deckFileName" class="meta"></span></div>
+      <h3>How should intros go out?</h3>
+      <div class="radio" id="sendMode">
+        <label><input type="radio" name="send" value="alloy_direct"> Alloy reaches out directly (recommended)</label>
+        <label><input type="radio" name="send" value="forwardable"> I email my Alloy connector a note they can forward</label>
+      </div>
+      <p class="meta">This is the default; you can change it for any single firm in step 1.</p>
+      <p><button class="primary" id="saveBlurb">Save and continue</button></p>
+    </div>
+
+    <div id="step-review" class="card hide"></div>
+    <div id="step-track" class="card hide"></div>
+  </section>
+</main>
+
+<div class="bar hide" id="bar"><div class="wrap"><span id="barText"></span><button class="primary" id="barGo">Review &amp; submit</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const cfg = window.FOUNDER_INTROS;
+const sb = createClient(cfg.supabaseUrl, cfg.supabaseKey);
+const $ = (id) => document.getElementById(id);
+const S = { user: null, company: null, options: [], choices: {}, settings: {}, status: {} };
+const SECTION = { new: "Not on your list yet", on_your_list: "Already on your list, a warmer route in", looser_fit: "Looser fit" };
+const CHOICES = [["request", "Request intro"], ["in_touch", "Already in touch"], ["passed", "Already passed"], ["skip", "Skip"]];
+const STATUS = { waiting_on_founder: "Waiting on your email", with_alloy: "With Alloy", asked: "Asked", accepted: "Accepted", meeting: "Meeting", passed: "Passed" };
+
+// text safety: everything from the database is escaped; only [text](https://...) and **bold** become markup
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const md = (s) => esc(s).replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+const link = (text, url) => url && /^https?:\/\//.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+const first = (name) => String(name || "").split(/\s+/)[0];
+function toast(t) { const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = "none", 2200); }
+
+// ---------- auth ----------
+$("loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $("email").value.trim();
+  $("loginMsg").textContent = "Sending...";
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+  $("loginMsg").textContent = error ? "We couldn't send a link to that address. Use the email Alloy has on file, or reply to your Alloy contact." :
+    "Check your inbox for a sign-in link from Alloy Partners.";
+};
+$("signout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+sb.auth.onAuthStateChange((_e, session) => { if (session && !S.user) start(session.user); });
+const { data: { session } } = await sb.auth.getSession();
+if (session) start(session.user); else $("login").classList.remove("hide");
+
+async function start(user) {
+  S.user = user;
+  $("login").classList.add("hide"); $("who").textContent = user.email; $("signout").classList.remove("hide");
+  const { data: companies, error } = await sb.from("companies").select("*");
+  if (error || !companies?.length) { $("app").classList.remove("hide"); $("step-pick").innerHTML = '<p class="empty">No intros have been shared with this email yet.</p>'; return; }
+  S.company = companies[0];
+  const slug = S.company.slug;
+  const [opts, ch, st, stat] = await Promise.all([
+    sb.from("intro_options").select("*").eq("company_slug", slug).order("rank"),
+    sb.from("founder_choices").select("*").eq("company_slug", slug),
+    sb.from("founder_settings").select("*").eq("company_slug", slug).maybeSingle(),
+    sb.from("intro_status").select("*"),
+  ]);
+  S.options = opts.data || [];
+  (ch.data || []).forEach((c) => S.choices[c.option_id] = c);
+  S.settings = st.data || { company_slug: slug, deck_mode: "link", default_send_mode: "alloy_direct" };
+  (stat.data || []).forEach((s) => S.status[s.option_id] = s.status);
+  $("title").textContent = `${S.company.name}: investors Alloy can introduce you to`;
+  $("app").classList.remove("hide");
+  renderPick(); renderBlurb(); updateBar();
+}
+
+// ---------- step 1: choose intros ----------
+function renderPick() {
+  const el = $("step-pick");
+  if (!S.options.length) { el.innerHTML = '<p class="empty">Your list is being prepared.</p>'; return; }
+  let html = '<h2>Choose your intros</h2><p class="lede">Mark every firm, even the ones you skip: it tells us who not to contact.</p>';
+  for (const sec of ["new", "on_your_list", "looser_fit"]) {
+    const rows = S.options.filter((o) => o.section === sec);
+    if (!rows.length) continue;
+    html += `<h3>${SECTION[sec]} (${rows.length})</h3>`;
+    for (const o of rows) html += rowHtml(o);
+  }
+  el.innerHTML = html;
+  el.querySelectorAll("[data-choice]").forEach((b) => b.onclick = () => setChoice(b.dataset.id, { choice: b.dataset.choice }));
+  el.querySelectorAll("[data-overlap]").forEach((b) => b.onclick = () => setChoice(b.dataset.id, { overlap_ok: b.dataset.overlap === "fine" }));
+  el.querySelectorAll("select[data-field]").forEach((s) => s.onchange = () => setChoice(s.dataset.id, { [s.dataset.field]: s.value === "" ? null : (s.dataset.field === "priority" ? Number(s.value) : s.value) }));
+}
+function rowHtml(o) {
+  const c = S.choices[o.id] || {};
+  const via = o.via ? ` via ${esc(o.via)}` : "";
+  const seg = CHOICES.map(([k, t]) => `<button data-id="${o.id}" data-choice="${k}" class="${k}${c.choice === k ? " on" : ""}">${t}</button>`).join("");
+  const flags = (o.overlap_flags || []);
+  const overlap = flags.length ? `<div class="overlap"><b>Possible overlap to check:</b> ${flags.map((f) => link(f.text, f.url)).join("; ")}
+      <div class="q"><button data-id="${o.id}" data-overlap="fine" class="fine${c.overlap_ok === true ? " on" : ""}">Not a concern</button>
+      <button data-id="${o.id}" data-overlap="conflict" class="${c.overlap_ok === false ? "on" : ""}">Real conflict, don't ask</button></div></div>` : "";
+  const opts = c.choice === "request" ? `<div class="sub">
+      <label>Priority <select data-id="${o.id}" data-field="priority"><option value="">-</option>${[1, 2, 3].map((p) => `<option ${c.priority === p ? "selected" : ""}>${p}</option>`).join("")}</select></label>
+      <label>Send as <select data-id="${o.id}" data-field="send_mode"><option value="">My default</option>
+        <option value="alloy_direct" ${c.send_mode === "alloy_direct" ? "selected" : ""}>Alloy reaches out</option>
+        <option value="forwardable" ${c.send_mode === "forwardable" ? "selected" : ""}>Forwardable from me</option></select></label>
+      <label>Deck <select data-id="${o.id}" data-field="deck_mode"><option value="">My default</option>
+        <option value="link" ${c.deck_mode === "link" ? "selected" : ""}>Link</option><option value="attachment" ${c.deck_mode === "attachment" ? "selected" : ""}>Attachment</option>
+        <option value="none" ${c.deck_mode === "none" ? "selected" : ""}>No deck</option></select></label></div>` : "";
+  const st = S.status[o.id] ? ` <span class="status ${S.status[o.id]}">${STATUS[S.status[o.id]]}</span>` : "";
+  return `<div class="row">
+    <div><div class="firm">${link(o.firm_name, o.firm_url)}</div>
+      <div class="meta">${link(o.investor_name, o.investor_url)}</div>
+      <div class="meta">Intro through ${esc(o.alloy_person)}${via}</div>
+      <div style="margin-top:6px"><span class="pill">${esc(o.fit_rating)} fit</span>${st}</div></div>
+    <div class="why">${md(o.why_fit)}${overlap}</div>
+    <div><div class="seg">${seg}</div>${opts}</div></div>`;
+}
+async function setChoice(id, patch) {
+  const prev = S.choices[id] || { option_id: id, company_slug: S.company.slug, choice: "skip" };
+  const next = { ...prev, ...patch, option_id: id, company_slug: S.company.slug, updated_by: S.user.email, updated_at: new Date().toISOString() };
+  if (patch.overlap_ok === false) next.choice = "skip";
+  const { error } = await sb.from("founder_choices").upsert(next, { onConflict: "option_id" });
+  if (error) { toast("Couldn't save. Check your connection and try again."); return; }
+  S.choices[id] = next; renderPick(); updateBar(); toast("Saved");
+}
+function requested() { return S.options.filter((o) => S.choices[o.id]?.choice === "request" && S.choices[o.id]?.overlap_ok !== false); }
+function updateBar() {
+  const n = requested().length, marked = Object.keys(S.choices).length;
+  $("bar").classList.toggle("hide", !S.options.length);
+  $("barText").textContent = `${n} intro${n === 1 ? "" : "s"} requested · ${marked} of ${S.options.length} firms marked`;
+}
+$("barGo").onclick = () => go("review");
+
+// ---------- step 2: blurb & deck ----------
+function renderBlurb() {
+  const s = S.settings;
+  $("blurb").value = s.blurb || "";
+  document.querySelectorAll('input[name="deck"]').forEach((r) => r.checked = r.value === (s.deck_mode || "link"));
+  document.querySelectorAll('input[name="send"]').forEach((r) => r.checked = r.value === (s.default_send_mode || "alloy_direct"));
+  $("deckLink").value = s.deck_link || "";
+  $("deckFileName").textContent = s.deck_path ? `On file: ${s.deck_path.split("/").pop()}` : "";
+  deckBoxes();
+}
+function deckBoxes() {
+  const m = document.querySelector('input[name="deck"]:checked')?.value;
+  $("deckLinkBox").classList.toggle("hide", m !== "link"); $("deckFileBox").classList.toggle("hide", m !== "attachment");
+}
+document.querySelectorAll('input[name="deck"]').forEach((r) => r.onchange = deckBoxes);
+$("saveBlurb").onclick = async () => {
+  const s = { ...S.settings, company_slug: S.company.slug, blurb: $("blurb").value.trim(), blurb_approved_at: new Date().toISOString(),
+    deck_mode: document.querySelector('input[name="deck"]:checked').value, deck_link: $("deckLink").value.trim() || null,
+    default_send_mode: document.querySelector('input[name="send"]:checked').value, updated_by: S.user.email, updated_at: new Date().toISOString() };
+  if (s.deck_mode === "link" && s.deck_link && !/^https?:\/\//.test(s.deck_link)) { toast("The deck link should start with https://"); return; }
+  const file = $("deckFile").files[0];
+  if (s.deck_mode === "attachment" && file) {
+    if (file.type !== "application/pdf") { toast("Please attach a PDF."); return; }
+    const path = `${S.company.slug}/${new Date().toISOString().slice(0, 10)}-${file.name.replace(/[^\w.-]+/g, "_")}`;
+    const up = await sb.storage.from("decks").upload(path, file, { contentType: "application/pdf", upsert: true });
+    if (up.error) { toast("The upload didn't work. Try again, or share a link instead."); return; }
+    s.deck_path = path;
+  }
+  if (s.deck_mode === "attachment" && !s.deck_path) { toast("Choose a PDF to attach."); return; }
+  const { error } = await sb.from("founder_settings").upsert(s, { onConflict: "company_slug" });
+  if (error) { toast("Couldn't save. Try again."); return; }
+  S.settings = s; renderBlurb(); toast("Saved"); go("review");
+};
+
+// ---------- step 3: review the exact emails ----------
+// Keep in step with automation/founder_sync.py, which builds the drafts from the same template.
+function deckLine(mode) {
+  if (mode === "link" && S.settings.deck_link) return `Deck: ${S.settings.deck_link}`;
+  if (mode === "attachment" && S.settings.deck_path) return "Deck attached.";
+  return "";
+}
+function emails(o) {
+  const c = S.choices[o.id] || {};
+  const send = c.send_mode || S.settings.default_send_mode || "alloy_direct";
+  const deck = deckLine(c.deck_mode || S.settings.deck_mode);
+  const ceo = S.company.ceo_name || "our CEO", co = S.company.name, blurb = S.settings.blurb || "(add your blurb in step 2)";
+  if (send === "alloy_direct") {
+    return { send, from: o.alloy_person, to: `${o.investor_name} (${o.firm_name})`, subject: `Intro: ${ceo}, CEO of ${co}`,
+      body: [`Hi ${first(o.investor_name)} -`, "",
+        `I'd like to introduce you to ${ceo}, CEO of ${co}, one of the companies we work with at Alloy Partners.` + (o.email_hook ? ` ${o.email_hook}` : ""), "",
+        blurb, ...(deck ? ["", deck] : []), "",
+        `Would you be open to a conversation with ${first(ceo)}? If so, I'm happy to connect you both.`, "", "Thanks!", first(o.alloy_person)].join("\n") };
+  }
+  return { send, from: ceo, to: o.alloy_person, toEmail: o.alloy_email, subject: `Intro to ${o.investor_name} at ${o.firm_name}?`,
+    body: [`Hi ${first(o.alloy_person)} -`, "",
+      `Would you be open to introducing me to ${o.investor_name} at ${o.firm_name}? Below is a short note you can forward.`, "",
+      `${o.investor_name.split(/\s+/)[0]} - ${blurb}`, ...(deck ? ["", deck] : []), "", "Thank you!", first(ceo)].join("\n") };
+}
+function renderReview() {
+  const list = requested();
+  let html = `<h2>Review &amp; submit</h2>`;
+  if (!list.length) { $("step-review").innerHTML = html + '<p class="empty">No intros requested yet. Go back to step 1.</p>'; return; }
+  if (!S.settings.blurb) html += '<p class="overlap">Add your blurb in step 2 before submitting.</p>';
+  html += `<p class="lede">Here's exactly what will be sent for each of your ${list.length} intro requests.</p>`;
+  for (const o of list) {
+    const e = emails(o);
+    const how = e.send === "alloy_direct" ? `${esc(o.alloy_person)} will email ${esc(o.investor_name)} directly` :
+      `You email ${esc(o.alloy_person)} a note they can forward to ${esc(o.investor_name)}`;
+    const mailto = e.send === "forwardable" ? `mailto:${encodeURIComponent(e.toEmail)}?subject=${encodeURIComponent(e.subject)}&body=${encodeURIComponent(e.body)}` : "";
+    html += `<div class="email"><div class="head"><b>${esc(o.firm_name)}</b> · ${how}<br>Subject: ${esc(e.subject)}</div>
+      <pre>${esc(e.body)}</pre><div class="foot"><span class="note">Your Alloy connector may refine this before sending.</span>
+      ${e.send === "forwardable" ? `<a class="btn" href="${mailto}">Open in my email</a><button data-copy="${o.id}">Copy text</button>
+        ${(S.choices[o.id]?.deck_mode || S.settings.deck_mode) === "attachment" ? '<span class="meta">Attach your deck before sending.</span>' : ""}` : ""}</div></div>`;
+  }
+  html += `<p><button class="primary" id="submit" ${S.settings.blurb ? "" : "disabled"}>Submit ${list.length} intro request${list.length === 1 ? "" : "s"}</button></p>
+    <p class="meta">Submitting sends your picks to Alloy. Each Alloy connector reviews the note and sends it themselves; nothing is sent automatically.</p>`;
+  $("step-review").innerHTML = html;
+  $("step-review").querySelectorAll("[data-copy]").forEach((b) => b.onclick = async () => {
+    const o = S.options.find((x) => x.id === b.dataset.copy); const e = emails(o);
+    await navigator.clipboard.writeText(`Subject: ${e.subject}\n\n${e.body}`); toast("Copied");
+  });
+  const sub = $("submit");
+  if (sub) sub.onclick = async () => {
+    sub.disabled = true;
+    const { error } = await sb.from("submissions").insert({ company_slug: S.company.slug });
+    if (error) { toast("Couldn't submit. Try again."); sub.disabled = false; return; }
+    toast("Submitted. Your Alloy connectors will take it from here."); go("track");
+  };
+}
+
+// ---------- status ----------
+function renderTrack() {
+  const list = S.options.filter((o) => ["request", "in_touch", "passed"].includes(S.choices[o.id]?.choice));
+  let html = '<h2>Status</h2><p class="lede">Updated as your Alloy connectors send each intro and hear back.</p>';
+  if (!list.length) { $("step-track").innerHTML = html + '<p class="empty">Nothing requested yet.</p>'; return; }
+  for (const o of list) {
+    const c = S.choices[o.id].choice;
+    const st = c === "request" ? (S.status[o.id] || "with_alloy") : null;
+    html += `<div class="row" style="grid-template-columns:1.2fr 1fr 1fr"><div><div class="firm">${link(o.firm_name, o.firm_url)}</div>
+      <div class="meta">${link(o.investor_name, o.investor_url)} · through ${esc(o.alloy_person)}</div></div>
+      <div class="meta">${c === "request" ? "Intro requested" : c === "in_touch" ? "You're already in touch" : "They already passed"}</div>
+      <div>${st ? `<span class="status ${st}">${STATUS[st]}</span>` : ""}</div></div>`;
+  }
+  $("step-track").innerHTML = html;
+}
+
+// ---------- navigation ----------
+function go(step) {
+  document.querySelectorAll(".steps button").forEach((b) => b.classList.toggle("on", b.dataset.step === step));
+  for (const s of ["pick", "blurb", "review", "track"]) $(`step-${s}`).classList.toggle("hide", s !== step);
+  if (step === "review") renderReview();
+  if (step === "track") renderTrack();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+document.querySelectorAll(".steps button").forEach((b) => b.onclick = () => go(b.dataset.step));
+</script>
+</body>
+</html>
