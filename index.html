@@ -320,15 +320,20 @@ async function start(user) {
 // ---------- step 02: choose intros ----------
 function renderPick() {
   const el = $("step-pick");
-  if (!S.options.length) { el.innerHTML = '<p class="empty">Your list is being prepared.</p>'; return; }
-  let html = '<p class="meta" style="margin:0">Mark every firm, including the ones you skip: it tells us who not to contact.</p>';
+  if (!offered().length) { el.innerHTML = '<p class="empty">Your list is being prepared.</p>'; return; }
+  const nn = newOnes().length;
+  let html = nn ? `<div class="callout" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <span><b>${nn} new investor${nn === 1 ? "" : "s"}</b> added since you submitted. They're marked New.</span>
+      <button class="small" id="onlyNew">${S.onlyNew ? "Show all firms" : "Show only new"}</button></div>` : "";
+  html += '<p class="meta" style="margin:0">Mark every firm, including the ones you skip: it tells us who not to contact.</p>';
   for (const [tier, title, sub] of TIERS) {   // best intros first; within a tier, the stronger relationship first
-    const rows = S.options.filter((o) => o.fit_rating === tier);
+    const rows = offered().filter((o) => o.fit_rating === tier && (!S.onlyNew || isNew(o)));
     if (!rows.length) continue;
     html += `<div class="section-h"><h2>${title}</h2><span class="meta">${rows.length} firm${rows.length === 1 ? "" : "s"} · ${sub}</span></div>`;
     for (const o of rows) html += rowHtml(o);
   }
   el.innerHTML = html;
+  if ($("onlyNew")) $("onlyNew").onclick = () => { S.onlyNew = !S.onlyNew; renderPick(); };
   el.querySelectorAll("[data-choice]").forEach((b) => b.onclick = () => setChoice(b.dataset.id, { choice: b.dataset.choice }));
   el.querySelectorAll("[data-overlap]").forEach((b) => b.onclick = () => setChoice(b.dataset.id, { overlap_ok: b.dataset.overlap === "fine" }));
   el.querySelectorAll("select[data-field]").forEach((s) => s.onchange = () => setChoice(s.dataset.id, { [s.dataset.field]: s.value === "" ? null : (s.dataset.field === "priority" ? Number(s.value) : s.value) }));
@@ -353,7 +358,7 @@ function rowHtml(o) {
       <div class="person">${link(o.investor_name, o.investor_url)}</div>
       <div class="meta">Intro through ${esc(o.alloy_person)}${via}</div>
       <dl class="terms">${term("Stage", o.stages)}${term("Size", o.check_size)}${term("Lead", o.leads)}</dl>
-      <span class="tag">${esc(o.fit_rating)} fit</span>${o.section === "on_your_list" ? ' <span class="tag" style="color:var(--muted);border-color:var(--line)">On your list</span>' : ""}${st}</div>
+      ${isNew(o) ? '<span class="tag" style="background:var(--ultramarine);color:#fff;border-color:var(--ultramarine)">New</span> ' : ""}<span class="tag">${esc(o.fit_rating)} fit</span>${o.section === "on_your_list" ? ' <span class="tag" style="color:var(--muted);border-color:var(--line)">On your list</span>' : ""}${st}</div>
     <div class="why">${md(o.why_fit)}${overlap}</div>
     <div><div class="choices">${seg}</div>${opts}</div></div>`;
 }
@@ -365,11 +370,16 @@ async function setChoice(id, patch) {
   if (error) { toast("Couldn't save. Check your connection and try again."); return; }
   S.choices[id] = next; renderPick(); updateBar(); toast("Saved");
 }
-function requested() { return S.options.filter((o) => S.choices[o.id]?.choice === "request" && S.choices[o.id]?.overlap_ok !== false); }
+function requested() { return S.options.filter((o) => S.choices[o.id]?.choice === "request" && S.choices[o.id]?.overlap_ok !== false
+  && (!o.retired_at || S.choices[o.id]?.submitted_at)); }
+const offered = () => S.options.filter((o) => !o.retired_at);   // retired firms stay in the tracker, not the list
+// New = added to the list after the founder's last submission and not yet answered
+const isNew = (o) => !!S.submittedAt && !o.retired_at && o.published_at > S.submittedAt && !S.choices[o.id]?.choice;
+const newOnes = () => offered().filter(isNew);
 function updateBar() {
   const n = requested().length, marked = Object.keys(S.choices).length;
-  $("bar").classList.toggle("hide", !S.options.length);
-  $("barText").textContent = `${n} intro${n === 1 ? "" : "s"} requested · ${marked} of ${S.options.length} firms marked`;
+  $("bar").classList.toggle("hide", !offered().length);
+  $("barText").textContent = `${n} intro${n === 1 ? "" : "s"} requested · ${marked} of ${offered().length} firms marked`;
 }
 $("barGo").onclick = () => go("review");
 
@@ -473,24 +483,28 @@ function renderReview() {
   let html = '<h2>Review &amp; submit</h2>';
   if (!list.length) { $("step-review").innerHTML = html + '<p class="empty">No intros requested yet. Choose some in step 02.</p>'; return; }
   if (!toText(S.settings.blurb)) html += '<p class="callout">Add your blurb in step 01 before submitting.</p>';
-  const fw = list.filter((o) => emails(o).send === "forwardable").length;
+  const fresh = list.filter((o) => !S.choices[o.id]?.submitted_at), done = list.length - fresh.length;
+  const fw = fresh.filter((o) => emails(o).send === "forwardable").length;
   html += `<p class="meta" style="margin:0 0 6px">Exactly what will be sent for each of your ${list.length} intro request${list.length === 1 ? "" : "s"}.
     ${fw ? `${fw} ${fw === 1 ? "is a note" : "are notes"} you'll send yourself; after you submit, your tracker lists ${fw === 1 ? "it" : "them"} with one-click send.` : ""}</p>`;
   for (const o of list) {
     const e = emails(o);
     const how = e.send === "alloy_direct" ? `${esc(o.alloy_person)} emails ${esc(o.investor_name)} directly` :
       `You email ${esc(o.alloy_person)} a note to forward to ${esc(o.investor_name)}`;
-    const note = e.send === "alloy_direct" ? "Your Alloy connector may refine this before sending." :
+    const sub = S.choices[o.id]?.submitted_at;
+    const note = sub ? `Submitted ${new Date(sub).toLocaleDateString(undefined, { month: "short", day: "numeric" })}; see your tracker.` : e.send === "alloy_direct" ? "Your Alloy connector may refine this before sending." :
       `You'll send this from your tracker after you submit. ${esc(first(o.alloy_person))} will add a line of their own when forwarding.`;
     html += `<div class="email"><div class="head"><b>${esc(o.firm_name)}</b><span class="meta">${how}</span><span>Subject: ${esc(e.subject)}</span></div>
       <div class="body">${e.html}</div><div class="foot"><span class="note">${note}</span></div></div>`;
   }
-  html += `<p style="margin-top:26px"><button class="primary" id="submit" ${toText(S.settings.blurb) ? "" : "disabled"}>Submit ${list.length} intro request${list.length === 1 ? "" : "s"}</button></p>
+  html += `<p style="margin-top:26px"><button class="primary" id="submit" ${toText(S.settings.blurb) && fresh.length ? "" : "disabled"}>${fresh.length ?
+      `Submit ${fresh.length} ${done ? "new " : ""}intro request${fresh.length === 1 ? "" : "s"}` : "Nothing new to submit"}</button></p>
     <p class="meta">Submitting sends your picks to Alloy. Each connector reviews their note and sends it themselves; nothing is sent automatically.</p>`;
   $("step-review").innerHTML = html;
   const sub = $("submit");
   if (sub) sub.onclick = async () => {
     sub.disabled = true;
+    for (const o of fresh) if (!(await stampChoice(o.id, "submitted_at"))) { toast("Couldn't submit. Try again."); sub.disabled = false; return; }
     const { error } = await sb.from("submissions").insert({ company_slug: S.company.slug });
     if (error) { toast("Couldn't submit. Try again."); sub.disabled = false; return; }
     S.submittedAt = new Date().toISOString();
@@ -543,6 +557,9 @@ function renderTrack() {
     $("exportCsv").onclick = exportCsv;
     return;
   }
+  const nn = newOnes().length;
+  if (nn) html += `<div class="callout" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+    <span><b>${nn} new investor${nn === 1 ? "" : "s"}</b> to review since you submitted.</span><button class="small primary" id="reviewNew">Review them</button></div>`;
   const fw = req.filter((o) => emails(o).send === "forwardable"), direct = req.filter((o) => emails(o).send !== "forwardable");
   const toSend = fw.filter((o) => !S.choices[o.id]?.founder_sent_at && !(S.status[o.id] && S.status[o.id] !== "waiting_on_founder"));
   if (fw.length) {
@@ -574,6 +591,7 @@ function renderTrack() {
     `${esc(o.firm_name)} (${S.choices[o.id].choice === "in_touch" ? "already in touch" : "already passed"})`).join(", ")}.</p>`;
   el.innerHTML = html;
   $("exportCsv").onclick = exportCsv;
+  if ($("reviewNew")) $("reviewNew").onclick = () => { S.onlyNew = true; renderPick(); go("pick"); };
   el.querySelectorAll("[data-open]").forEach((a) => a.addEventListener("click", () => stampChoice(a.dataset.open, "founder_opened_at")));
   el.querySelectorAll("[data-sent]").forEach((b) => b.onclick = async () => {
     if (await stampChoice(b.dataset.sent, "founder_sent_at")) { toast("Marked sent. We'll confirm when it arrives."); renderTrack(); }
