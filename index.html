@@ -400,6 +400,7 @@ function renderChips() {
     links.map((l, i) => `<button type="button" data-chip="${i}">+ ${esc(l.label)}</button>`).join("") : "";
   $("chips").querySelectorAll("[data-chip]").forEach((b) => b.onmousedown = (e) => {
     e.preventDefault(); const l = links[Number(b.dataset.chip)];
+    if (!SAFE_HREF.test(l.url || "")) return;
     restore(); document.execCommand("insertHTML", false, `<a href="${esc(l.url)}">${escT(l.label)}</a>&nbsp;`);
   });
 }
@@ -440,7 +441,7 @@ $("saveBlurb").onclick = async () => {
 // ---------- step 03: the exact emails ----------
 // Mirrors automation/founder_emails.build (tests/test_founder_sync.py pins the plain text).
 function deck(mode) {
-  if (mode === "link" && S.settings.deck_link) return [`Deck: ${S.settings.deck_link}`, `<p>Deck: <a href="${esc(S.settings.deck_link)}">${escT(S.settings.deck_link)}</a></p>`];
+  if (mode === "link" && /^https?:\/\//i.test(S.settings.deck_link || "")) return [`Deck: ${S.settings.deck_link}`, `<p>Deck: <a href="${esc(S.settings.deck_link)}">${escT(S.settings.deck_link)}</a></p>`];
   if (mode === "attachment" && S.settings.deck_path) return ["Deck attached.", "<p>Deck attached.</p>"];
   return ["", ""];
 }
