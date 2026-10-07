@@ -175,8 +175,15 @@ async function start(user) {
   S.check = checks[0];
   $("title").textContent = `${S.check.person.split(" ")[0]}, who do you know?`;
   $("due").textContent = S.check.due ? `Please finish by ${S.check.due}.` : "";
-  const { data: rows, error } = await sb.from("rc_rows").select("*").eq("check_id", S.check.id).is("retired_at", null).order("rank");
-  if (error) { $("rows").innerHTML = '<p class="empty">Couldn\'t load your list. Refresh to try again.</p>'; return; }
+  // Supabase returns at most 1,000 rows per request: page through so long lists (Nammy's 1,036) load whole
+  const rows = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb.from("rc_rows").select("*").eq("check_id", S.check.id).is("retired_at", null)
+      .order("rank").range(from, from + 999);
+    if (error) { $("rows").innerHTML = '<p class="empty">Couldn\'t load your list. Refresh to try again.</p>'; return; }
+    rows.push(...data);
+    if (data.length < 1000) break;
+  }
   S.rows = rows;
   render();
 }
