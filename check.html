@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Relationship Check | Alloy Partners</title>
+<link rel="icon" href="alloy-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Same Alloy styling as index.html (alloypartners.com: white canvas, near-black ink, ultramarine accents, pill buttons). */
+  :root {
+    --ink: #171717; --body: #26262B; --muted: #6B6B73; --line: #E6E6E6; --wash: #F4F4F4;
+    --ultramarine: #2929E2; --ok: #1F7A3F; --warn: #9A5B00; --bad: #C0362C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--body); }
+  body { font: 300 16px/1.6 "DM Sans", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--ultramarine); text-underline-offset: 3px; }
+  b, strong { font-weight: 500; color: var(--ink); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 30px; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 92px; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 14px; color: var(--ink); text-decoration: none; }
+  .logo img { height: 34px; }
+  .logo span { font: 400 13px/1 "Roboto Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    padding-left: 14px; border-left: 1px solid var(--line); }
+  .who { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--muted); }
+  main { padding-bottom: 140px; }
+  .eyebrow { font: 400 12px/1 "Roboto Mono", monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--ultramarine); margin: 0 0 18px; }
+  h1 { font: 400 clamp(38px, 6vw, 68px)/1.04 "DM Sans", Arial, sans-serif; letter-spacing: -0.035em; color: var(--ink); margin: 0 0 22px; }
+  h2 { font: 400 26px/1.15 "DM Sans", Arial, sans-serif; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 6px; }
+  .lede { font-size: 18px; line-height: 1.55; max-width: 760px; margin: 0; }
+  .meta { font-size: 14px; color: var(--muted); }
+  .hero { padding: 30px 0 36px; }
+  button { font: 400 15px/1 "DM Sans", Arial, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--ink);
+    border-radius: 999px; padding: 11px 18px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  button:hover { background: var(--ink); color: #fff; }
+  button.primary { background: var(--ink); color: #fff; } button.primary:hover { background: var(--ultramarine); border-color: var(--ultramarine); }
+  button.ghost { border-color: var(--line); } button.ghost:hover { background: var(--wash); color: var(--ink); }
+  button.small { padding: 7px 12px; font-size: 13px; }
+  input[type=email], input[type=text], textarea { font: 300 15px/1.4 "DM Sans", Arial, sans-serif; color: var(--ink); width: 100%;
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  textarea { resize: vertical; min-height: 40px; }
+  input:focus, textarea:focus { outline: 2px solid var(--ultramarine); outline-offset: 1px; }
+
+  /* scale */
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 0 0 26px; }
+  .scale div { padding: 14px 16px 14px 0; font-size: 13px; color: var(--muted); }
+  .scale b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .scale .k { font: 400 11px/1 "Roboto Mono", monospace; color: var(--ultramarine); margin-right: 6px; }
+  @media (max-width: 760px) { .scale { grid-template-columns: 1fr 1fr; } }
+
+  /* progress + filters */
+  .bar { position: sticky; top: 0; z-index: 3; background: rgba(255,255,255,.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 18px; padding: 12px 0; flex-wrap: wrap; }
+  .track { flex: 1 1 200px; height: 4px; background: var(--wash); border-radius: 4px; overflow: hidden; }
+  .track i { display: block; height: 100%; width: 0; background: var(--ultramarine); transition: width .25s; }
+  .filters { display: flex; gap: 6px; }
+  .filters button { padding: 7px 12px; font-size: 13px; border-color: var(--line); }
+  .filters button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* rows */
+  .group-h { margin: 34px 0 4px; }
+  .row { display: grid; grid-template-columns: 1.1fr 1.3fr 1.4fr; gap: 26px; padding: 22px 0; border-top: 1px solid var(--line); scroll-margin-top: 80px; }
+  .row.focus { box-shadow: inset 3px 0 0 var(--ultramarine); padding-left: 14px; }
+  .firm { font: 400 21px/1.2 "DM Sans", Arial, sans-serif; color: var(--ink); margin-bottom: 6px; }
+  .firm a { color: var(--ink); text-decoration: none; } .firm a:hover { color: var(--ultramarine); }
+  .person { font-size: 15px; } .why { font-size: 14px; line-height: 1.6; color: var(--body); }
+  .rate { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+  .rate button { padding: 7px 12px; font-size: 13px; border-color: var(--line); }
+  .rate button.on { background: var(--ultramarine); color: #fff; border-color: var(--ultramarine); }
+  .rate button.on.neg { background: var(--ink); border-color: var(--ink); }
+  .extra { display: grid; gap: 8px; margin-top: 10px; }
+  .saved { font: 400 11px/1 "Roboto Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ok); min-height: 12px; }
+  .tag { display: inline-block; margin-top: 10px; font: 400 11px/1 "Roboto Mono", monospace; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ultramarine); border: 1px solid #CFCFF8; border-radius: 999px; padding: 5px 9px; }
+  @media (max-width: 860px) { .row { grid-template-columns: 1fr; gap: 12px; } .logo span { display: none; } }
+
+  .login { max-width: 520px; padding: 40px 0 80px; }
+  .login form { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; } .login input { flex: 1 1 260px; }
+  .empty { color: var(--muted); padding: 40px 0; }
+  .done { border-left: 2px solid var(--ok); padding: 4px 0 4px 14px; margin: 30px 0 0; }
+  .keys { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  kbd { font: 400 11px/1 "Roboto Mono", monospace; border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; background: var(--wash); }
+  .toast { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; display: none; z-index: 5; }
+  footer { font-size: 13px; color: var(--muted); padding: 30px 0; }
+  .hide { display: none !important; }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="https://www.alloypartners.com/" target="_blank" rel="noopener"><img src="alloy-logo.svg" alt="Alloy"><span>Relationship Check</span></a>
+  <div class="who"><span id="who"></span><button id="signout" class="small ghost hide">Sign out</button></div>
+</div></header>
+
+<main class="wrap">
+  <section id="login" class="login hide">
+    <p class="eyebrow">Alloy team</p>
+    <h1>Sign in</h1>
+    <p class="lede">Enter your Alloy email and we'll send a one-time sign-in link.</p>
+    <form id="loginForm"><input type="email" id="email" required placeholder="you@alloypartners.com" autocomplete="email">
+      <button class="primary" type="submit">Email me a link</button></form>
+    <p id="loginMsg" class="meta"></p>
+  </section>
+
+  <section id="app" class="hide">
+    <div class="hero">
+      <p class="eyebrow">Relationship Check</p>
+      <h1 id="title"></h1>
+      <p class="lede">These are investors we think you know, strongest signal first, then firms our live raises need where nobody at Alloy has a path yet.
+        Rate each one; add a note if there's context worth knowing. <b>Everything saves as you click</b>: stop and come back any time.
+        Notes stay inside Alloy and never reach a founder.</p>
+      <p class="meta" id="due"></p>
+    </div>
+
+    <div class="scale" id="scale"></div>
+
+    <div class="bar">
+      <span class="meta" id="count"></span>
+      <div class="track"><i id="fill"></i></div>
+      <div class="filters">
+        <button data-f="todo" class="on">To rate</button>
+        <button data-f="all">All</button>
+        <button data-f="done">Rated</button>
+      </div>
+    </div>
+    <p class="keys">Keyboard: <kbd>j</kbd>/<kbd>k</kbd> move, <kbd>1</kbd>-<kbd>5</kbd> rate, <kbd>n</kbd> add a note.</p>
+
+    <div id="rows"></div>
+    <div id="finished" class="done hide"><b>All rated. Thank you.</b> Your answers are in; Alloy picks them up automatically. Change anything any time.</div>
+  </section>
+  <footer>Alloy Partners · Internal: your ratings and notes are visible only to you and the Alloy investor-network admins.</footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const cfg = window.FOUNDER_INTROS;
+const sb = createClient(cfg.supabaseUrl, cfg.supabaseKey);
+const $ = (id) => document.getElementById(id);
+// Mirrors scripts/relationship_check.py SCALE; codes match data/ratings/*.jsonl
+const SCALE = [["close", "Close", "Would take your call this week", "You could text them"],
+  ["know", "Know", "Worked together, or talk a few times a year", "They'd answer your email within days"],
+  ["met", "Met", "Met once or twice", "They'd recognize your name"],
+  ["dont_know", "Don't know", "Not a real connection", "Removes the guess from the map"],
+  ["private", "Private", "A personal relationship", "We never route an intro through you"]];
+const S = { check: null, rows: [], filter: "todo", focus: 0 };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const link = (text, url) => url && /^https?:\/\//.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+function toast(t) { const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = "none", 2200); }
+
+$("scale").innerHTML = SCALE.map(([, l, m, t], i) => `<div><b><span class="k">${i + 1}</span>${l}</b>${esc(m)}. ${esc(t)}.</div>`).join("");
+
+// ---------- auth ----------
+const pre = new URLSearchParams(location.search).get("email");
+if (pre) $("email").value = pre;
+$("loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  $("loginMsg").textContent = "Sending...";
+  const { error } = await sb.auth.signInWithOtp({ email: $("email").value.trim(), options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+  $("loginMsg").textContent = error ? "We couldn't send a link to that address. Use your Alloy email, or ask Mike to add you." : "Check your inbox for a sign-in link.";
+};
+$("signout").onclick = async () => { await sb.auth.signOut(); location.href = location.pathname; };
+sb.auth.onAuthStateChange((_e, session) => { if (session && !S.check) start(session.user); });
+const { data: { session } } = await sb.auth.getSession();
+if (session) start(session.user); else $("login").classList.remove("hide");
+
+async function start(user) {
+  $("login").classList.add("hide"); $("who").textContent = user.email; $("signout").classList.remove("hide"); $("app").classList.remove("hide");
+  const { data: checks } = await sb.from("rc_checks").select("*");
+  if (!checks?.length) { S.check = {}; $("title").textContent = "Nothing to rate yet"; $("rows").innerHTML = '<p class="empty">No Relationship Check has been set up for this email.</p>'; return; }
+  S.check = checks[0];
+  $("title").textContent = `${S.check.person.split(" ")[0]}, who do you know?`;
+  $("due").textContent = S.check.due ? `Please finish by ${S.check.due}.` : "";
+  const { data: rows, error } = await sb.from("rc_rows").select("*").eq("check_id", S.check.id).is("retired_at", null).order("rank");
+  if (error) { $("rows").innerHTML = '<p class="empty">Couldn\'t load your list. Refresh to try again.</p>'; return; }
+  S.rows = rows;
+  render();
+}
+
+// ---------- render ----------
+const visible = () => S.rows.filter((r) => S.filter === "all" || (S.filter === "todo" ? !r.rating : !!r.rating));
+const isNew = (r) => !r.rating && Date.now() - new Date(r.published_at) < 14 * 864e5 && S.rows.some((x) => x.published_at < r.published_at);
+
+function rowHtml(r, i) {
+  const who = r.kind === "gap" ? `<div class="meta">No one at Alloy has a path here yet.</div>`
+    : `<div class="person">${link(r.person_name || "(name not on file)", r.person_url)}${r.person_title ? `, ${esc(r.person_title)}` : ""}</div>`;
+  const rate = SCALE.map(([c, l]) => `<button data-r="${c}" class="${r.rating === c ? "on" : ""} ${c === "dont_know" || c === "private" ? "neg" : ""}">${l}</button>`).join("");
+  const gap = r.kind === "gap" ? `<input type="text" data-k="known_person" maxlength="120" placeholder="Know someone there? Their name" value="${esc(r.known_person || "")}">` : "";
+  return `<div class="row ${i === S.focus ? "focus" : ""}" data-id="${r.id}" id="r-${r.id}">
+    <div><div class="firm">${link(r.firm, r.firm_url)}</div>${who}${isNew(r) ? '<span class="tag">New</span>' : ""}</div>
+    <div class="why">${esc(r.why || "")}</div>
+    <div><div class="rate">${rate}</div><div class="extra">${gap}
+      <textarea data-k="note" maxlength="500" rows="1" placeholder="Note (optional)" title="e.g. college roommate, worked together at X">${esc(r.note || "")}</textarea>
+      <span class="saved"></span></div></div></div>`;
+}
+
+function render() {
+  const list = visible();
+  const confirm = list.filter((r) => r.kind === "confirm"), gaps = list.filter((r) => r.kind === "gap");
+  let i = 0;
+  const block = (h, sub, rs) => rs.length ? `<div class="group-h"><h2>${h}</h2><p class="meta">${sub}</p></div>` + rs.map((r) => rowHtml(r, i++)).join("") : "";
+  $("rows").innerHTML = block("Investors we think you know", "From your email, calendar, LinkedIn and past intros. Confirm or correct.", confirm)
+    + block("Anyone there?", "Firms our live raises need where no one at Alloy has a path. If you know someone, add their name and rate it.", gaps)
+    || `<p class="empty">${S.filter === "todo" ? "Nothing left to rate." : "Nothing here yet."}</p>`;
+  progress();
+}
+
+function progress() {
+  const done = S.rows.filter((r) => r.rating).length;
+  $("count").textContent = `${done} of ${S.rows.length} rated`;
+  $("fill").style.width = S.rows.length ? `${(100 * done) / S.rows.length}%` : "0";
+  $("finished").classList.toggle("hide", !S.rows.length || done < S.rows.length);
+}
+
+// ---------- save ----------
+async function save(id, patch, el) {
+  const r = S.rows.find((x) => x.id === id);
+  const body = { ...patch, rated_at: new Date().toISOString() };
+  const { error } = await sb.from("rc_rows").update(body).eq("id", id);
+  if (error) { toast("Couldn't save. Check your connection and try again."); return false; }
+  Object.assign(r, body);
+  const s = el?.closest(".row")?.querySelector(".saved");
+  if (s) { s.textContent = "Saved"; setTimeout(() => s.textContent = "", 1500); }
+  progress();
+  return true;
+}
+
+$("rows").addEventListener("click", async (e) => {
+  const b = e.target.closest(".rate button"); if (!b) return;
+  const row = b.closest(".row"), id = row.dataset.id, r = S.rows.find((x) => x.id === id);
+  const rating = r.rating === b.dataset.r ? null : b.dataset.r;           // click again to clear
+  if (r.kind === "gap" && rating && ["close", "know", "met"].includes(rating) && !(r.known_person || row.querySelector('[data-k="known_person"]').value.trim())) {
+    toast("Add the name of who you know there first"); row.querySelector('[data-k="known_person"]').focus(); return;
+  }
+  if (!(await save(id, { rating }, b))) return;
+  row.querySelectorAll(".rate button").forEach((x) => x.classList.toggle("on", x.dataset.r === rating));
+  S.focus = [...document.querySelectorAll(".row")].indexOf(row);
+  if (S.filter === "todo" && rating) setTimeout(() => { render(); focusRow(S.focus); }, 350);   // rated rows leave the to-do view
+});
+$("rows").addEventListener("change", (e) => {
+  const k = e.target.dataset.k; if (!k) return;
+  const id = e.target.closest(".row").dataset.id;
+  save(id, { [k]: e.target.value.trim() || null }, e.target);   // a note alone isn't a rating; rc_sync reads rated rows only
+});
+
+document.querySelectorAll(".filters button").forEach((b) => b.onclick = () => {
+  document.querySelectorAll(".filters button").forEach((x) => x.classList.toggle("on", x === b));
+  S.filter = b.dataset.f; S.focus = 0; render();
+});
+
+// ---------- keyboard ----------
+function focusRow(i) {
+  const rows = [...document.querySelectorAll(".row")]; if (!rows.length) return;
+  S.focus = Math.max(0, Math.min(i, rows.length - 1));
+  rows.forEach((r, j) => r.classList.toggle("focus", j === S.focus));
+  rows[S.focus].scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest?.("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) { if (e.key === "Escape") e.target.blur(); return; }
+  const rows = [...document.querySelectorAll(".row")], row = rows[S.focus]; if (!row) return;
+  if (e.key === "j") focusRow(S.focus + 1);
+  else if (e.key === "k") focusRow(S.focus - 1);
+  else if (/^[1-5]$/.test(e.key)) row.querySelector(`.rate button[data-r="${SCALE[+e.key - 1][0]}"]`).click();
+  else if (e.key === "n") { e.preventDefault(); row.querySelector("textarea").focus(); }
+  else return;
+});
+</script>
+</body>
+</html>
