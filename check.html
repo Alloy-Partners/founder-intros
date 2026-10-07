@@ -66,7 +66,15 @@
   .row { display: grid; grid-template-columns: 1.1fr 1.3fr 1.4fr; gap: 26px; padding: 22px 0; border-top: 1px solid var(--line); scroll-margin-top: 80px; }
   .row.focus { box-shadow: inset 3px 0 0 var(--ultramarine); padding-left: 14px; }
   .firm { font: 400 21px/1.2 "DM Sans", Arial, sans-serif; color: var(--ink); margin-bottom: 6px; }
-  .firm a { color: var(--ink); text-decoration: none; } .firm a:hover { color: var(--ultramarine); }
+  .firm a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+  .firm a:hover { color: var(--ultramarine); text-decoration-color: var(--ultramarine); }
+  .person a { font-weight: 400; } .person .t { color: var(--muted); }
+  .search { font: 400 10px/1 "Roboto Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+  .edit { background: none; border: 0; padding: 0; margin-left: 8px; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+  .edit:hover { background: none; color: var(--ultramarine); }
+  .namefix { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .namefix input:last-child { grid-column: 1 / -1; }
+  .namefix input { padding: 6px 9px; font-size: 14px; }
   .person { font-size: 15px; } .why { font-size: 14px; line-height: 1.6; color: var(--body); }
   .rate { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
   .rate button { padding: 7px 12px; font-size: 13px; border-color: var(--line); }
@@ -192,9 +200,26 @@ async function start(user) {
 const visible = () => S.rows.filter((r) => S.filter === "all" || (S.filter === "todo" ? !r.rating : !!r.rating));
 const isNew = (r) => !r.rating && Date.now() - new Date(r.published_at) < 14 * 864e5 && S.rows.some((x) => x.published_at < r.published_at);
 
+// Who this row is: the rater's own fix wins; an email-only contact reads "Name not on file" + the address;
+// a LinkedIn search (not a known profile) is labeled as one.
+function personHtml(r) {
+  const raw = r.person_name || "";
+  const emailOnly = raw.includes("@") && !r.name_edit;
+  const name = r.name_edit || (emailOnly ? "" : raw);
+  const title = r.title_edit || r.person_title || "";
+  const isSearch = (r.person_url || "").includes("/search/results/");
+  const shown = name ? link(name, r.name_edit ? null : r.person_url) + (isSearch && !r.name_edit ? '<span class="search">search</span>' : "")
+                     : '<span class="meta">Name not on file</span>';
+  const mail = emailOnly ? `<div class="meta"><a href="mailto:${esc(raw)}">${esc(raw)}</a></div>` : "";
+  const [first, ...rest] = name.split(" ");
+  return `<div class="person">${shown}${title ? `<span class="t">, ${esc(title)}</span>` : ""}<button class="edit" data-edit>Edit</button></div>${mail}
+    <div class="namefix hide"><input type="text" data-k="first" placeholder="First name" value="${esc(first || "")}" maxlength="60">
+      <input type="text" data-k="last" placeholder="Last name" value="${esc(rest.join(" "))}" maxlength="60">
+      <input type="text" data-k="title_edit" placeholder="Title" value="${esc(title)}" maxlength="160"></div>`;
+}
+
 function rowHtml(r, i) {
-  const who = r.kind === "gap" ? `<div class="meta">No one at Alloy has a path here yet.</div>`
-    : `<div class="person">${link(r.person_name || "(name not on file)", r.person_url)}${r.person_title ? `, ${esc(r.person_title)}` : ""}</div>`;
+  const who = r.kind === "gap" ? `<div class="meta">No one at Alloy has a path here yet.</div>` : personHtml(r);
   const rate = SCALE.map(([c, l]) => `<button data-r="${c}" class="${r.rating === c ? "on" : ""} ${c === "dont_know" || c === "private" ? "neg" : ""}">${l}</button>`).join("");
   const gap = r.kind === "gap" ? `<input type="text" data-k="known_person" maxlength="120" placeholder="Know someone there? Their name" value="${esc(r.known_person || "")}">` : "";
   return `<div class="row ${i === S.focus ? "focus" : ""}" data-id="${r.id}" id="r-${r.id}">
@@ -223,6 +248,12 @@ function progress() {
   $("finished").classList.toggle("hide", !S.rows.length || done < S.rows.length);
 }
 
+function refreshPerson(row, id) {                                       // show the fix at once, keep the edit box open
+  const r = S.rows.find((x) => x.id === id), el = row.querySelector(".person");
+  const tmp = document.createElement("div"); tmp.innerHTML = personHtml(r);
+  el.replaceWith(tmp.querySelector(".person"));
+}
+
 // ---------- save ----------
 async function save(id, patch, el) {
   const r = S.rows.find((x) => x.id === id);
@@ -248,9 +279,20 @@ $("rows").addEventListener("click", async (e) => {
   S.focus = [...document.querySelectorAll(".row")].indexOf(row);
   if (S.filter === "todo" && rating) setTimeout(() => { render(); focusRow(S.focus); }, 350);   // rated rows leave the to-do view
 });
+$("rows").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-edit]"); if (!b) return;
+  const box = b.closest(".row").querySelector(".namefix"); box.classList.toggle("hide");
+  if (!box.classList.contains("hide")) box.querySelector("input").focus();
+});
 $("rows").addEventListener("change", (e) => {
   const k = e.target.dataset.k; if (!k) return;
-  const id = e.target.closest(".row").dataset.id;
+  const row = e.target.closest(".row"), id = row.dataset.id;
+  if (k === "first" || k === "last") {                                   // first + last save together as one name
+    const full = ["first", "last"].map((x) => row.querySelector(`[data-k="${x}"]`).value.trim()).filter(Boolean).join(" ");
+    save(id, { name_edit: full || null }, e.target).then((ok) => ok && refreshPerson(row, id));
+    return;
+  }
+  if (k === "title_edit") { save(id, { title_edit: e.target.value.trim() || null }, e.target).then((ok) => ok && refreshPerson(row, id)); return; }
   save(id, { [k]: e.target.value.trim() || null }, e.target);   // a note alone isn't a rating; rc_sync reads rated rows only
 });
 
