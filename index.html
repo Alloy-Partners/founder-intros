@@ -104,6 +104,11 @@
   .toolbar button:hover { background: #fff; color: var(--ink); border-color: var(--line); }
   .toolbar .sep { width: 1px; background: var(--line); margin: 2px 4px; }
   .editor { min-height: 200px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 0 0 8px 8px; font-size: 16px; line-height: 1.6; color: var(--body); }
+  .editor:empty:before { content: attr(data-placeholder); color: var(--muted); font-style: italic; }
+  .editor { border-radius: 8px; min-height: 110px; margin-bottom: 4px; }
+  .sec-label { display: flex; justify-content: space-between; align-items: baseline; margin: 22px 0 8px; }
+  .sec-label b { font-size: 16px; } .sec-label span { font-size: 13px; color: var(--muted); }
+  .toolbar { border-radius: 8px; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
   .editor p { margin: 0 0 10px; } .editor ul { margin: 0 0 10px; padding-left: 22px; }
   .linkbar { display: none; gap: 8px; margin-top: 8px; } .linkbar.on { display: flex; }
   .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }
@@ -194,18 +199,29 @@
         <label>Your title<input type="text" id="ceoTitle" placeholder="CEO"></label>
         <label>Your LinkedIn<input type="url" id="ceoLinkedin" placeholder="https://www.linkedin.com/in/..."></label>
         <label>Company website<input type="url" id="companyWebsite" placeholder="https://..."></label>
+        <label style="grid-column:1/-1">How Alloy built it with you (optional)<input type="text" id="origin" placeholder="e.g. co-created with Mayo Clinic Florida through the 1842 Studio"></label>
       </div>
-      <h2>Your blurb</h2>
-      <p class="meta" style="margin:0 0 18px">Write it once, for every investor: what you do, proof points, what you're raising. Paste from your own doc if you like;
-        links and bullets carry over. We open each intro with a line written for that investor, so keep greetings and names out of it.</p>
+      <h2>Your intro</h2>
+      <p class="meta" style="margin:0 0 6px">Every intro opens with the ask ("Would you be open to an intro to you, of your company?") and closes with
+        why that investor should care and your deck. You write the three parts in between, once, for every investor. Paste from your own doc if you like;
+        links and bullets carry over. Keep greetings and investor names out of it.</p>
       <div class="toolbar">
         <button type="button" data-cmd="bold"><b>B</b>&nbsp;Bold</button>
         <button type="button" data-cmd="insertUnorderedList">&bull;&nbsp;Bullets</button>
         <span class="sep"></span>
         <button type="button" id="linkBtn">Link</button>
         <button type="button" data-cmd="unlink">Remove link</button>
+        <span class="meta" style="align-self:center;margin-left:auto">Applies to the part you're editing</span>
       </div>
-      <div class="editor" id="editor" contenteditable="true" spellcheck="true"></div>
+      <div class="sec-label"><b>1. The company</b><span>What you do and for whom</span></div>
+      <div class="editor" data-key="blurb_company" contenteditable="true" spellcheck="true"
+        data-placeholder="What the company does, for whom, and what's different. Bullets work well for products or layers."></div>
+      <div class="sec-label"><b>2. Team spotlight</b><span>Why this team wins</span></div>
+      <div class="editor" data-key="blurb_team" contenteditable="true" spellcheck="true"
+        data-placeholder="Why you (and any co-founders) are the right team: years in the space, prior startups and outcomes, key roles. e.g. 'Robert has spent 23 years in talent technology, including four years running enterprise sales at Upwork through its IPO. His co-founder Ren built and sold HiLink, an AI upskilling platform, in 2025.'"></div>
+      <div class="sec-label"><b>3. Traction and fundraise</b><span>Proof points and what you're raising</span></div>
+      <div class="editor" data-key="blurb_traction" contenteditable="true" spellcheck="true"
+        data-placeholder="Customers, partners, pilots, revenue, investors so far, and the raise. e.g. 'Twenty named manufacturing employers in Indiana, partnerships with Ivy Tech, and an investment from the 1842 Fund. Raising an additional $1M.'"></div>
       <div class="linkbar" id="linkbar"><input type="url" id="linkUrl" placeholder="https://..."><button class="small primary" id="linkApply" type="button">Add link</button>
         <button class="small ghost" id="linkCancel" type="button">Cancel</button></div>
       <div id="blurbWarn"></div>
@@ -397,37 +413,54 @@ function updateBar() {
 $("barGo").onclick = () => go("review");
 
 // ---------- step 01: blurb (rich text) & deck ----------
-let savedRange = null;
-const editor = $("editor");
-editor.addEventListener("blur", () => { const s = getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); });
-function restore() { editor.focus(); if (savedRange) { const s = getSelection(); s.removeAllRanges(); s.addRange(savedRange); } }
+let savedRange = null, active = null;
+const EDITORS = [...document.querySelectorAll(".editor[data-key]")];   // company, team spotlight, traction and fundraise
+const ed = (key) => EDITORS.find((e) => e.dataset.key === key);
+for (const e of EDITORS) {
+  e.addEventListener("focus", () => { active = e; });
+  e.addEventListener("blur", () => { const sel = getSelection(); if (sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange(); });
+  e.addEventListener("paste", (ev) => {   // pasted content keeps links and bullets, loses fonts, colors and scripts
+    ev.preventDefault();
+    const html = ev.clipboardData.getData("text/html"), text = ev.clipboardData.getData("text/plain");
+    document.execCommand("insertHTML", false, html ? cleanHtml(html) : escT(text).replace(/\n/g, "<br>"));
+  });
+  e.addEventListener("input", checkBlurb);
+}
+function restore() { (active || EDITORS[0]).focus(); if (savedRange) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); } }
 document.querySelectorAll(".toolbar [data-cmd]").forEach((b) => b.onmousedown = (e) => { e.preventDefault(); document.execCommand(b.dataset.cmd); });
-$("linkBtn").onmousedown = (e) => { e.preventDefault(); const s = getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); $("linkbar").classList.add("on"); $("linkUrl").focus(); };
+$("linkBtn").onmousedown = (e) => { e.preventDefault(); const sel = getSelection(); if (sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange(); $("linkbar").classList.add("on"); $("linkUrl").focus(); };
 $("linkCancel").onclick = () => $("linkbar").classList.remove("on");
 $("linkApply").onclick = () => {
   const url = $("linkUrl").value.trim();
   if (!/^https?:\/\//.test(url)) { toast("Links should start with https://"); return; }
   restore();
-  const s = getSelection();
-  if (s.isCollapsed) document.execCommand("insertHTML", false, `<a href="${esc(url)}">${escT(url)}</a>`);
+  const sel = getSelection();
+  if (sel.isCollapsed) document.execCommand("insertHTML", false, `<a href="${esc(url)}">${escT(url)}</a>`);
   else document.execCommand("createLink", false, url);
   $("linkbar").classList.remove("on"); $("linkUrl").value = "";
 };
-editor.addEventListener("paste", (e) => {   // pasted content keeps links and bullets, loses fonts, colors and scripts
-  e.preventDefault();
-  const html = e.clipboardData.getData("text/html"), text = e.clipboardData.getData("text/plain");
-  document.execCommand("insertHTML", false, html ? cleanHtml(html) : escT(text).replace(/\n/g, "<br>"));
-});
-function checkBlurb() {   // the blurb goes to every investor; a greeting or a name in it means it was written for one
-  const t = toText(editor.innerHTML).trim();
-  const bad = /^(hi|hello|hey|dear|good (morning|afternoon))\b/i.test(t) || /\b(thanks|thank you|best|cheers),?\s*\n?\s*\w+\s*$/i.test(t);
-  $("blurbWarn").innerHTML = bad ? '<p class="warn">This looks like it was written for one person (a greeting or sign-off). '
-    + "Each intro already opens and closes for that investor, so keep the blurb to the pitch itself.</p>" : "";
+const GAP = /\[insert[^\]]*\]/gi;   // prompts we left where we didn't know; nothing with one reaches an investor
+const gapsIn = (st) => ["blurb_company", "blurb_team", "blurb_traction", "blurb"].flatMap((k) => toText(st[k] || "").match(GAP) || [])
+  .concat(String(st.origin || "").match(GAP) || []);
+function checkBlurb() {   // these parts go to every investor; a greeting or a sign-off means they were written for one
+  const bad = EDITORS.some((e) => { const t = toText(e.innerHTML).trim();
+    return /^(hi|hello|hey|dear|good (morning|afternoon))\b/i.test(t) || /\b(thanks|thank you|best|cheers),?\s*\n?\s*\w+\s*$/i.test(t); });
+  const gaps = EDITORS.flatMap((e) => toText(e.innerHTML).match(GAP) || []);
+  for (const e of EDITORS) e.style.borderColor = /\[insert[^\]]*\]/i.test(toText(e.innerHTML)) ? "var(--warn)" : "";
+  $("blurbWarn").innerHTML = (gaps.length ? `<p class="warn"><b>${gaps.length} part${gaps.length === 1 ? "" : "s"} to fill in</b> (in [brackets]). `
+      + "We left these where we didn't have the facts rather than guess. You can save as you go; you can't submit until they're filled.</p>" : "")
+    + (bad ? '<p class="warn">Part of this looks written for one person (a greeting or sign-off). '
+    + "Each intro already opens and closes for that investor, so keep these parts to the pitch itself.</p>" : "");
 }
-editor.addEventListener("input", checkBlurb);
+// Mirrors founder_emails.sections: company, team, traction; a legacy single blurb counts as the company part
+function sectionsOf(st) {
+  return ["blurb_company", "blurb_team", "blurb_traction"].map((k) => cleanHtml(st[k] || (k === "blurb_company" ? st.blurb : "") || ""))
+    .filter((h) => toText(h)).map((h) => [h, toText(h)]);
+}
 function renderBlurb() {
   const s = S.settings;
-  editor.innerHTML = cleanHtml(s.blurb || "");
+  for (const e of EDITORS) e.innerHTML = cleanHtml(s[e.dataset.key] || (e.dataset.key === "blurb_company" ? s.blurb : "") || "");
+  $("origin").value = s.origin ?? S.company.origin ?? "";
   $("ceoName").value = s.ceo_name || S.company.ceo_name || "";
   $("ceoTitle").value = s.ceo_title || "CEO";
   $("ceoLinkedin").value = s.ceo_linkedin || S.company.ceo_linkedin || "";
@@ -445,12 +478,13 @@ function deckBoxes() {
 }
 document.querySelectorAll('input[name="deck"]').forEach((r) => r.onchange = deckBoxes);
 $("saveBlurb").onclick = async () => {
-  const s = { ...S.settings, company_slug: S.company.slug, blurb: cleanHtml(editor.innerHTML), blurb_approved_at: new Date().toISOString(),
+  const parts = Object.fromEntries(EDITORS.map((e) => [e.dataset.key, cleanHtml(e.innerHTML) || null]));
+  const s = { ...S.settings, company_slug: S.company.slug, ...parts, origin: $("origin").value.trim() || null, blurb_approved_at: new Date().toISOString(),
     deck_mode: document.querySelector('input[name="deck"]:checked').value, deck_link: $("deckLink").value.trim() || null,
     default_send_mode: document.querySelector('input[name="send"]:checked').value, updated_by: S.user.email, updated_at: new Date().toISOString(),
     ceo_name: $("ceoName").value.trim() || null, ceo_title: $("ceoTitle").value.trim() || null,
     ceo_linkedin: $("ceoLinkedin").value.trim() || null, company_website: $("companyWebsite").value.trim() || null };
-  if (!toText(s.blurb)) { toast("Add a short blurb first."); return; }
+  if (!toText(s.blurb_company || "") && !toText(s.blurb || "")) { toast("Add a few lines about the company first."); return; }
   for (const [k, label] of [["ceo_linkedin", "LinkedIn"], ["company_website", "website"]])
     if (s[k] && !/^https?:\/\//i.test(s[k])) { toast(`Your ${label} link should start with https://`); return; }
   if (s.deck_mode === "link" && s.deck_link && !/^https?:\/\//.test(s.deck_link)) { toast("The deck link should start with https://"); return; }
@@ -470,43 +504,46 @@ $("saveBlurb").onclick = async () => {
 
 // ---------- step 03: the exact emails ----------
 // Mirrors automation/founder_emails.build (tests/test_founder_sync.py pins the plain text).
-function deck(mode) {
-  if (mode === "link" && /^https?:\/\//i.test(S.settings.deck_link || "")) return [`Deck: ${S.settings.deck_link}`, `<p>Deck: <a href="${esc(S.settings.deck_link)}">${escT(S.settings.deck_link)}</a></p>`];
-  if (mode === "attachment" && S.settings.deck_path) return ["Deck attached.", "<p>Deck attached.</p>"];
-  return ["", ""];
+function deck(mode) {   // never silent: investors expect to know about the deck
+  if (mode === "link" && /^https?:\/\//i.test(S.settings.deck_link || "")) return [`You can see the deck here: ${S.settings.deck_link}`,
+    `<p>You can see the deck here: <a href="${esc(S.settings.deck_link)}">${escT(S.settings.deck_link)}</a></p>`];
+  if (mode === "attachment" && S.settings.deck_path) return ["The deck is attached.", "<p>The deck is attached.</p>"];
+  return ["Happy to share the deck on request.", "<p>Happy to share the deck on request.</p>"];
 }
 const P = (t) => `<p>${escT(t)}</p>`;
-function emails(o) {
+function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6 deck, close
   const c = S.choices[o.id] || {};
   const send = c.send_mode || S.settings.default_send_mode || "alloy_direct";
   const [deckT, deckH] = deck(c.deck_mode || S.settings.deck_mode || "none");
   const ceo = S.settings.ceo_name || S.company.ceo_name || "our CEO", co = S.company.name, title = S.settings.ceo_title || "CEO";
+  const origin = String(S.settings.origin ?? S.company.origin ?? "").trim().replace(/\.$/, "");
   const safe = (u) => /^https?:\/\//i.test((u || "").trim()) ? u.trim() : "";
   const li = safe(S.settings.ceo_linkedin || S.company.ceo_linkedin), site = safe(S.settings.company_website || S.company.website);
   const ceoH = li ? `<a href="${esc(li)}">${escT(ceo)}</a>` : escT(ceo), coH = site ? `<a href="${esc(site)}">${escT(co)}</a>` : escT(co);
-  const blurbH = cleanHtml(S.settings.blurb), blurbT = toText(S.settings.blurb);
+  const secs = sectionsOf(S.settings);
   if (send === "alloy_direct") {
-    const hello = `Hi ${first(o.investor_name)} -`;
-    const hook = o.email_hook ? ` ${o.email_hook}` : "";
-    const intro = `Would you be open to an intro to ${ceo}, ${title} of ${co}, one of our portfolio companies at Alloy Partners?` + hook;
-    const introH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}, one of our portfolio companies at Alloy Partners?${escT(hook)}</p>`;
-    const ask = `If so, I'm happy to connect you and ${first(ceo)}.`;
+    const hello = `Hi ${first(o.investor_name)} -`, tail = origin ? `, ${origin}` : "";
+    const ask = `Would you be open to an intro to ${ceo}, ${title} of ${co}, one of our portfolio companies at Alloy Partners${tail}?`;
+    const askH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}, one of our portfolio companies at Alloy Partners${escT(tail)}?</p>`;
+    const why = o.email_hook || "", close = `If so, I'm happy to connect you and ${first(ceo)}.`;
     return { send, subject: `Intro to ${ceo}, ${title} of ${co}?`,
-      text: [hello, "", intro, "", blurbT, ...(deckT ? ["", deckT] : []), "", ask, "", "Thanks!", first(o.alloy_person)].join("\n"),
-      html: P(hello) + introH + blurbH + deckH + P(ask) + `<p>Thanks!<br>${escT(first(o.alloy_person))}</p>` };
+      text: [hello, ask, ...secs.map(([, t]) => t), ...(why ? [why] : []), deckT, close, `Thanks!\n${first(o.alloy_person)}`].join("\n\n"),
+      html: P(hello) + askH + secs.map(([h]) => h).join("") + (why ? P(why) : "") + deckH + P(close) + `<p>Thanks!<br>${escT(first(o.alloy_person))}</p>` };
   }
   const hello = `Hi ${first(o.alloy_person)} -`;
   const ask = `Would you be open to introducing me to ${o.investor_name} at ${o.firm_name}? Below is a short note you can forward.`;
   const toInv = `${first(o.investor_name)} -`;
   return { send, toEmail: o.alloy_email, subject: `Intro to ${o.investor_name} at ${o.firm_name}?`,
-    text: [hello, "", ask, "", toInv, "", blurbT, ...(deckT ? ["", deckT] : []), "", "Thank you!", first(ceo)].join("\n"),
-    html: P(hello) + P(ask) + P(toInv) + blurbH + deckH + `<p>Thank you!<br>${escT(first(ceo))}</p>` };
+    text: [hello, ask, toInv, ...secs.map(([, t]) => t), deckT, `Thank you!\n${first(ceo)}`].join("\n\n"),
+    html: P(hello) + P(ask) + P(toInv) + secs.map(([h]) => h).join("") + deckH + `<p>Thank you!<br>${escT(first(ceo))}</p>` };
 }
 function renderReview() {
   const list = requested();
   let html = '<h2>Review &amp; submit</h2>';
   if (!list.length) { $("step-review").innerHTML = html + '<p class="empty">No intros requested yet. Choose some in step 02.</p>'; return; }
-  if (!toText(S.settings.blurb)) html += '<p class="callout">Add your blurb in step 01 before submitting.</p>';
+  if (!sectionsOf(S.settings).length) html += '<p class="callout">Add your intro in step 01 before submitting.</p>';
+  const gaps = gapsIn(S.settings);
+  if (gaps.length) html += `<p class="callout">Fill in the ${gaps.length} bracketed part${gaps.length === 1 ? "" : "s"} in step 01 before submitting: ${gaps.map(escT).join("; ")}</p>`;
   const fresh = list.filter((o) => !S.choices[o.id]?.submitted_at), done = list.length - fresh.length;
   const fw = fresh.filter((o) => emails(o).send === "forwardable").length;
   html += `<p class="meta" style="margin:0 0 6px">Exactly what will be sent for each of your ${list.length} intro request${list.length === 1 ? "" : "s"}.
@@ -521,7 +558,7 @@ function renderReview() {
     html += `<div class="email"><div class="head"><b>${esc(o.firm_name)}</b><span class="meta">${how}</span><span>Subject: ${esc(e.subject)}</span></div>
       <div class="body">${e.html}</div><div class="foot"><span class="note">${note}</span></div></div>`;
   }
-  html += `<p style="margin-top:26px"><button class="primary" id="submit" ${toText(S.settings.blurb) && fresh.length ? "" : "disabled"}>${fresh.length ?
+  html += `<p style="margin-top:26px"><button class="primary" id="submit" ${sectionsOf(S.settings).length && fresh.length && !gaps.length ? "" : "disabled"}>${fresh.length ?
       `Submit ${fresh.length} ${done ? "new " : ""}intro request${fresh.length === 1 ? "" : "s"}` : "Nothing new to submit"}</button></p>
     <p class="meta">Submitting sends your picks to Alloy. Each connector reviews their note and sends it themselves; nothing is sent automatically.</p>`;
   $("step-review").innerHTML = html;
