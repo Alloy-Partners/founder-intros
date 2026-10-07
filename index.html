@@ -169,20 +169,20 @@
       <p class="eyebrow" id="eyebrow">Investor intros</p>
       <h1 id="title"></h1>
       <p class="lede">Investors someone at Alloy knows personally and believes could fit your raise, strongest relationship first.
-        Choose the intros you want, tell us who you're already talking to, confirm your blurb, and review exactly what will be sent.
+        Confirm your blurb and deck, choose the intros you want, tell us who you're already talking to, and review exactly what will be sent.
         Nothing goes out until your Alloy connector reviews and sends it.</p>
     </div>
 
     <nav class="steps">
-      <button data-step="pick" class="on"><span class="n">01</span>Choose intros</button>
-      <button data-step="blurb"><span class="n">02</span>Blurb &amp; deck</button>
+      <button data-step="blurb" class="on"><span class="n">01</span>Blurb &amp; deck</button>
+      <button data-step="pick"><span class="n">02</span>Choose intros</button>
       <button data-step="review"><span class="n">03</span>Review &amp; submit</button>
       <button data-step="track"><span class="n">04</span>Your tracker</button>
     </nav>
 
-    <div id="step-pick" class="panel"></div>
+    <div id="step-pick" class="panel hide"></div>
 
-    <div id="step-blurb" class="panel hide">
+    <div id="step-blurb" class="panel">
       <h2>Your blurb</h2>
       <p class="meta" style="margin:0 0 18px">Used in every intro. Add links and bullets; we started it from what you've shared with Alloy.</p>
       <div class="toolbar">
@@ -214,9 +214,9 @@
           <label><input type="radio" name="send" value="alloy_direct"><span>Alloy reaches out directly (recommended)<small>Your Alloy connector emails the investor with your blurb</small></span></label>
           <label><input type="radio" name="send" value="forwardable"><span>I send my Alloy connector a note to forward<small>You email it; they forward it with a line of their own</small></span></label>
         </div>
-        <p class="meta">This is your default. You can change it for any single firm in step 01.</p>
+        <p class="meta">This is your default. You can change it for any single firm in step 02.</p>
       </fieldset>
-      <p style="margin-top:28px"><button class="primary" id="saveBlurb">Save and continue</button></p>
+      <p style="margin-top:28px"><button class="primary" id="saveBlurb">Save and choose intros</button></p>
     </div>
 
     <div id="step-review" class="panel hide"></div>
@@ -317,7 +317,7 @@ async function start(user) {
   if (S.submittedAt) go("track");   // returning founders land on their tracker
 }
 
-// ---------- step 01: choose intros ----------
+// ---------- step 02: choose intros ----------
 function renderPick() {
   const el = $("step-pick");
   if (!S.options.length) { el.innerHTML = '<p class="empty">Your list is being prepared.</p>'; return; }
@@ -373,7 +373,7 @@ function updateBar() {
 }
 $("barGo").onclick = () => go("review");
 
-// ---------- step 02: blurb (rich text) & deck ----------
+// ---------- step 01: blurb (rich text) & deck ----------
 let savedRange = null;
 const editor = $("editor");
 editor.addEventListener("blur", () => { const s = getSelection(); if (s.rangeCount) savedRange = s.getRangeAt(0).cloneRange(); });
@@ -436,7 +436,7 @@ $("saveBlurb").onclick = async () => {
   if (s.deck_mode === "attachment" && !s.deck_path) { toast("Choose a PDF to attach."); return; }
   const { error } = await sb.from("founder_settings").upsert(s, { onConflict: "company_slug" });
   if (error) { toast("Couldn't save. Try again."); return; }
-  S.settings = s; renderBlurb(); toast("Saved"); go("review");
+  S.settings = s; renderBlurb(); toast("Saved"); go("pick");
 };
 
 // ---------- step 03: the exact emails ----------
@@ -471,8 +471,8 @@ function emails(o) {
 function renderReview() {
   const list = requested();
   let html = '<h2>Review &amp; submit</h2>';
-  if (!list.length) { $("step-review").innerHTML = html + '<p class="empty">No intros requested yet. Choose some in step 01.</p>'; return; }
-  if (!toText(S.settings.blurb)) html += '<p class="callout">Add your blurb in step 02 before submitting.</p>';
+  if (!list.length) { $("step-review").innerHTML = html + '<p class="empty">No intros requested yet. Choose some in step 02.</p>'; return; }
+  if (!toText(S.settings.blurb)) html += '<p class="callout">Add your blurb in step 01 before submitting.</p>';
   const fw = list.filter((o) => emails(o).send === "forwardable").length;
   html += `<p class="meta" style="margin:0 0 6px">Exactly what will be sent for each of your ${list.length} intro request${list.length === 1 ? "" : "s"}.
     ${fw ? `${fw} ${fw === 1 ? "is a note" : "are notes"} you'll send yourself; after you submit, your tracker lists ${fw === 1 ? "it" : "them"} with one-click send.` : ""}</p>`;
