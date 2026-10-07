@@ -488,8 +488,8 @@ function emails(o) {
   if (send === "alloy_direct") {
     const hello = `Hi ${first(o.investor_name)} -`;
     const hook = o.email_hook ? ` ${o.email_hook}` : "";
-    const intro = `Would you be open to an intro to ${ceo}, ${title} of ${co}, one of the companies we work with at Alloy Partners?` + hook;
-    const introH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}, one of the companies we work with at Alloy Partners?${escT(hook)}</p>`;
+    const intro = `Would you be open to an intro to ${ceo}, ${title} of ${co}, one of our portfolio companies at Alloy Partners?` + hook;
+    const introH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}, one of our portfolio companies at Alloy Partners?${escT(hook)}</p>`;
     const ask = `If so, I'm happy to connect you and ${first(ceo)}.`;
     return { send, subject: `Intro to ${ceo}, ${title} of ${co}?`,
       text: [hello, "", intro, "", blurbT, ...(deckT ? ["", deckT] : []), "", ask, "", "Thanks!", first(o.alloy_person)].join("\n"),
