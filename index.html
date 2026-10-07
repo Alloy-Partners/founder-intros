@@ -235,6 +235,7 @@ const sb = createClient(cfg.supabaseUrl, cfg.supabaseKey);
 const $ = (id) => document.getElementById(id);
 const S = { user: null, company: null, options: [], choices: {}, settings: {}, status: {} };
 const SECTION = { new: ["Not on your list yet", "Investors you're not already tracking"], on_your_list: ["Already on your list", "A warmer route in"], looser_fit: ["Looser fit", "Worth a look, not a priority"] };
+const TIERS = [["Strong", "Strongest fits", "Start here"], ["Good", "Good fits", "Worth a conversation"], ["Possible", "Possible fits", "A looser fit; your call"]];
 const CHOICES = [["request", "Request intro"], ["in_touch", "Already in touch"], ["passed", "Already passed"], ["skip", "Skip"]];
 const STATUS = { waiting_on_founder: "Waiting on your email", with_alloy: "With Alloy", asked: "Asked", accepted: "Accepted", meeting: "Meeting", passed: "Passed" };
 
@@ -321,10 +322,10 @@ function renderPick() {
   const el = $("step-pick");
   if (!S.options.length) { el.innerHTML = '<p class="empty">Your list is being prepared.</p>'; return; }
   let html = '<p class="meta" style="margin:0">Mark every firm, including the ones you skip: it tells us who not to contact.</p>';
-  for (const sec of ["new", "on_your_list", "looser_fit"]) {
-    const rows = S.options.filter((o) => o.section === sec);
+  for (const [tier, title, sub] of TIERS) {   // best intros first; within a tier, the stronger relationship first
+    const rows = S.options.filter((o) => o.fit_rating === tier);
     if (!rows.length) continue;
-    html += `<div class="section-h"><h2>${SECTION[sec][0]}</h2><span class="meta">${rows.length} firms · ${SECTION[sec][1]}</span></div>`;
+    html += `<div class="section-h"><h2>${title}</h2><span class="meta">${rows.length} firm${rows.length === 1 ? "" : "s"} · ${sub}</span></div>`;
     for (const o of rows) html += rowHtml(o);
   }
   el.innerHTML = html;
@@ -352,7 +353,7 @@ function rowHtml(o) {
       <div class="person">${link(o.investor_name, o.investor_url)}</div>
       <div class="meta">Intro through ${esc(o.alloy_person)}${via}</div>
       <dl class="terms">${term("Stage", o.stages)}${term("Size", o.check_size)}${term("Lead", o.leads)}</dl>
-      <span class="tag">${esc(o.fit_rating)} fit</span>${st}</div>
+      <span class="tag">${esc(o.fit_rating)} fit</span>${o.section === "on_your_list" ? ' <span class="tag" style="color:var(--muted);border-color:var(--line)">On your list</span>' : ""}${st}</div>
     <div class="why">${md(o.why_fit)}${overlap}</div>
     <div><div class="choices">${seg}</div>${opts}</div></div>`;
 }
