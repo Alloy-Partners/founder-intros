@@ -208,7 +208,6 @@
       <div class="editor" id="editor" contenteditable="true" spellcheck="true"></div>
       <div class="linkbar" id="linkbar"><input type="url" id="linkUrl" placeholder="https://..."><button class="small primary" id="linkApply" type="button">Add link</button>
         <button class="small ghost" id="linkCancel" type="button">Cancel</button></div>
-      <div class="chips" id="chips"></div>
       <div id="blurbWarn"></div>
 
       <fieldset>
@@ -426,16 +425,6 @@ function checkBlurb() {   // the blurb goes to every investor; a greeting or a n
     + "Each intro already opens and closes for that investor, so keep the blurb to the pitch itself.</p>" : "";
 }
 editor.addEventListener("input", checkBlurb);
-function renderChips() {
-  const links = S.company.links || [];
-  $("chips").innerHTML = links.length ? '<span class="meta" style="align-self:center">Insert:</span>' +
-    links.map((l, i) => `<button type="button" data-chip="${i}">+ ${esc(l.label)}</button>`).join("") : "";
-  $("chips").querySelectorAll("[data-chip]").forEach((b) => b.onmousedown = (e) => {
-    e.preventDefault(); const l = links[Number(b.dataset.chip)];
-    if (!SAFE_HREF.test(l.url || "")) return;
-    restore(); document.execCommand("insertHTML", false, `<a href="${esc(l.url)}">${escT(l.label)}</a>&nbsp;`);
-  });
-}
 function renderBlurb() {
   const s = S.settings;
   editor.innerHTML = cleanHtml(s.blurb || "");
@@ -448,7 +437,7 @@ function renderBlurb() {
   document.querySelectorAll('input[name="send"]').forEach((r) => r.checked = r.value === (s.default_send_mode || "alloy_direct"));
   $("deckLink").value = s.deck_link || "";
   $("deckFileName").textContent = s.deck_path ? `On file: ${s.deck_path.split("/").pop()}` : "";
-  renderChips(); deckBoxes();
+  deckBoxes();
 }
 function deckBoxes() {
   const m = document.querySelector('input[name="deck"]:checked')?.value;
