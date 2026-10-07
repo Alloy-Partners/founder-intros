@@ -94,6 +94,10 @@
   .overlap .q { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .overlap button.on { background: var(--ink); color: #fff; }
 
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; margin: 0 0 30px; }
+  .fields label { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+  @media (max-width: 700px) { .fields { grid-template-columns: 1fr; } }
+  .warn { border-left: 2px solid var(--warn); padding: 4px 0 4px 12px; font-size: 14px; margin: 10px 0 0; }
   /* blurb editor */
   .toolbar { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--wash); }
   .toolbar button { padding: 6px 12px; font-size: 13px; border-color: transparent; background: transparent; }
@@ -183,8 +187,17 @@
     <div id="step-pick" class="panel hide"></div>
 
     <div id="step-blurb" class="panel">
+      <h2>You and your company</h2>
+      <p class="meta" style="margin:0 0 18px">We filled these in from what Alloy has on file. Fix anything that's off; every intro links your name and company from here.</p>
+      <div class="fields">
+        <label>Your name<input type="text" id="ceoName" autocomplete="name"></label>
+        <label>Your title<input type="text" id="ceoTitle" placeholder="CEO"></label>
+        <label>Your LinkedIn<input type="url" id="ceoLinkedin" placeholder="https://www.linkedin.com/in/..."></label>
+        <label>Company website<input type="url" id="companyWebsite" placeholder="https://..."></label>
+      </div>
       <h2>Your blurb</h2>
-      <p class="meta" style="margin:0 0 18px">Used in every intro. Add links and bullets; we started it from what you've shared with Alloy.</p>
+      <p class="meta" style="margin:0 0 18px">Write it once, for every investor: what you do, proof points, what you're raising. Paste from your own doc if you like;
+        links and bullets carry over. We open each intro with a line written for that investor, so keep greetings and names out of it.</p>
       <div class="toolbar">
         <button type="button" data-cmd="bold"><b>B</b>&nbsp;Bold</button>
         <button type="button" data-cmd="insertUnorderedList">&bull;&nbsp;Bullets</button>
@@ -196,6 +209,7 @@
       <div class="linkbar" id="linkbar"><input type="url" id="linkUrl" placeholder="https://..."><button class="small primary" id="linkApply" type="button">Add link</button>
         <button class="small ghost" id="linkCancel" type="button">Cancel</button></div>
       <div class="chips" id="chips"></div>
+      <div id="blurbWarn"></div>
 
       <fieldset>
         <legend>Deck</legend>
@@ -405,6 +419,13 @@ editor.addEventListener("paste", (e) => {   // pasted content keeps links and bu
   const html = e.clipboardData.getData("text/html"), text = e.clipboardData.getData("text/plain");
   document.execCommand("insertHTML", false, html ? cleanHtml(html) : escT(text).replace(/\n/g, "<br>"));
 });
+function checkBlurb() {   // the blurb goes to every investor; a greeting or a name in it means it was written for one
+  const t = toText(editor.innerHTML).trim();
+  const bad = /^(hi|hello|hey|dear|good (morning|afternoon))\b/i.test(t) || /\b(thanks|thank you|best|cheers),?\s*\n?\s*\w+\s*$/i.test(t);
+  $("blurbWarn").innerHTML = bad ? '<p class="warn">This looks like it was written for one person (a greeting or sign-off). '
+    + "Each intro already opens and closes for that investor, so keep the blurb to the pitch itself.</p>" : "";
+}
+editor.addEventListener("input", checkBlurb);
 function renderChips() {
   const links = S.company.links || [];
   $("chips").innerHTML = links.length ? '<span class="meta" style="align-self:center">Insert:</span>' +
@@ -418,6 +439,11 @@ function renderChips() {
 function renderBlurb() {
   const s = S.settings;
   editor.innerHTML = cleanHtml(s.blurb || "");
+  $("ceoName").value = s.ceo_name || S.company.ceo_name || "";
+  $("ceoTitle").value = s.ceo_title || "CEO";
+  $("ceoLinkedin").value = s.ceo_linkedin || S.company.ceo_linkedin || "";
+  $("companyWebsite").value = s.company_website || S.company.website || "";
+  checkBlurb();
   document.querySelectorAll('input[name="deck"]').forEach((r) => r.checked = r.value === (s.deck_mode || "link"));
   document.querySelectorAll('input[name="send"]').forEach((r) => r.checked = r.value === (s.default_send_mode || "alloy_direct"));
   $("deckLink").value = s.deck_link || "";
@@ -432,8 +458,12 @@ document.querySelectorAll('input[name="deck"]').forEach((r) => r.onchange = deck
 $("saveBlurb").onclick = async () => {
   const s = { ...S.settings, company_slug: S.company.slug, blurb: cleanHtml(editor.innerHTML), blurb_approved_at: new Date().toISOString(),
     deck_mode: document.querySelector('input[name="deck"]:checked').value, deck_link: $("deckLink").value.trim() || null,
-    default_send_mode: document.querySelector('input[name="send"]:checked').value, updated_by: S.user.email, updated_at: new Date().toISOString() };
+    default_send_mode: document.querySelector('input[name="send"]:checked').value, updated_by: S.user.email, updated_at: new Date().toISOString(),
+    ceo_name: $("ceoName").value.trim() || null, ceo_title: $("ceoTitle").value.trim() || null,
+    ceo_linkedin: $("ceoLinkedin").value.trim() || null, company_website: $("companyWebsite").value.trim() || null };
   if (!toText(s.blurb)) { toast("Add a short blurb first."); return; }
+  for (const [k, label] of [["ceo_linkedin", "LinkedIn"], ["company_website", "website"]])
+    if (s[k] && !/^https?:\/\//i.test(s[k])) { toast(`Your ${label} link should start with https://`); return; }
   if (s.deck_mode === "link" && s.deck_link && !/^https?:\/\//.test(s.deck_link)) { toast("The deck link should start with https://"); return; }
   const file = $("deckFile").files[0];
   if (s.deck_mode === "attachment" && file) {
@@ -461,15 +491,20 @@ function emails(o) {
   const c = S.choices[o.id] || {};
   const send = c.send_mode || S.settings.default_send_mode || "alloy_direct";
   const [deckT, deckH] = deck(c.deck_mode || S.settings.deck_mode || "none");
-  const ceo = S.company.ceo_name || "our CEO", co = S.company.name;
+  const ceo = S.settings.ceo_name || S.company.ceo_name || "our CEO", co = S.company.name, title = S.settings.ceo_title || "CEO";
+  const safe = (u) => /^https?:\/\//i.test((u || "").trim()) ? u.trim() : "";
+  const li = safe(S.settings.ceo_linkedin || S.company.ceo_linkedin), site = safe(S.settings.company_website || S.company.website);
+  const ceoH = li ? `<a href="${esc(li)}">${escT(ceo)}</a>` : escT(ceo), coH = site ? `<a href="${esc(site)}">${escT(co)}</a>` : escT(co);
   const blurbH = cleanHtml(S.settings.blurb), blurbT = toText(S.settings.blurb);
   if (send === "alloy_direct") {
     const hello = `Hi ${first(o.investor_name)} -`;
-    const intro = `Would you be open to an intro to ${ceo}, CEO of ${co}, one of the companies we work with at Alloy Partners?` + (o.email_hook ? ` ${o.email_hook}` : "");
+    const hook = o.email_hook ? ` ${o.email_hook}` : "";
+    const intro = `Would you be open to an intro to ${ceo}, ${title} of ${co}, one of the companies we work with at Alloy Partners?` + hook;
+    const introH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}, one of the companies we work with at Alloy Partners?${escT(hook)}</p>`;
     const ask = `If so, I'm happy to connect you and ${first(ceo)}.`;
-    return { send, subject: `Intro to ${ceo}, CEO of ${co}?`,
+    return { send, subject: `Intro to ${ceo}, ${title} of ${co}?`,
       text: [hello, "", intro, "", blurbT, ...(deckT ? ["", deckT] : []), "", ask, "", "Thanks!", first(o.alloy_person)].join("\n"),
-      html: P(hello) + P(intro) + blurbH + deckH + P(ask) + `<p>Thanks!<br>${escT(first(o.alloy_person))}</p>` };
+      html: P(hello) + introH + blurbH + deckH + P(ask) + `<p>Thanks!<br>${escT(first(o.alloy_person))}</p>` };
   }
   const hello = `Hi ${first(o.alloy_person)} -`;
   const ask = `Would you be open to introducing me to ${o.investor_name} at ${o.firm_name}? Below is a short note you can forward.`;
