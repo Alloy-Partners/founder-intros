@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Company Profiles | Alloy Partners</title>
+<link rel="icon" href="alloy-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Same Alloy styling as check.html and share.html. A list of companies (most out of date first) and one edit form. */
+  :root {
+    --ink: #171717; --body: #26262B; --muted: #6B6B73; --line: #E6E6E6; --wash: #F4F4F4;
+    --ultramarine: #2929E2; --ok: #1F7A3F; --warn: #9A5B00; --bad: #C0362C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--body); }
+  body { font: 300 16px/1.6 "DM Sans", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--ultramarine); text-underline-offset: 3px; }
+  b, strong { font-weight: 500; color: var(--ink); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 30px; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 92px; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 14px; color: var(--ink); text-decoration: none; }
+  .logo img { height: 34px; }
+  .logo span { font: 400 13px/1 "Roboto Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    padding-left: 14px; border-left: 1px solid var(--line); }
+  @media (max-width: 640px) { .logo span { display: none; } }
+  .who { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--muted); min-width: 0; }
+  .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  main { padding-bottom: 120px; }
+  .eyebrow { font: 400 12px/1 "Roboto Mono", monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--ultramarine); margin: 0 0 18px; }
+  h1 { font: 400 clamp(34px, 6vw, 56px)/1.05 "DM Sans", Arial, sans-serif; letter-spacing: -0.035em; color: var(--ink); margin: 0 0 18px; text-wrap: balance; }
+  h2 { font: 400 22px/1.2 "DM Sans", Arial, sans-serif; letter-spacing: -0.02em; color: var(--ink); margin: 34px 0 10px; }
+  .lede { font-size: 18px; line-height: 1.55; margin: 0; max-width: 680px; }
+  .meta { font-size: 13px; color: var(--muted); }
+  .hero { padding: 26px 0 26px; }
+  button, select { font: 400 15px/1 "DM Sans", Arial, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--ink);
+    border-radius: 999px; padding: 10px 16px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  select { border-radius: 6px; border-color: var(--line); padding: 9px 12px; width: 100%; }
+  button:hover { background: var(--ink); color: #fff; }
+  button.primary { background: var(--ink); color: #fff; } button.primary:hover { background: var(--ultramarine); border-color: var(--ultramarine); }
+  button.ghost { border-color: var(--line); } button.ghost:hover { background: var(--wash); color: var(--ink); }
+  button.small { padding: 7px 12px; font-size: 13px; }
+  button:disabled { opacity: .45; cursor: default; }
+  input[type=email], input[type=text], input[type=url], textarea { font: 300 15px/1.45 "DM Sans", Arial, sans-serif; color: var(--ink);
+    width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--ultramarine); outline-offset: 1px; }
+  .login { max-width: 520px; padding: 40px 0 80px; }
+  .login form { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; } .login input { flex: 1 1 260px; }
+
+  .counts { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .counts button { font-size: 13px; padding: 7px 12px; border-color: var(--line); }
+  .counts button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip { display: inline-block; font: 400 11px/1 "Roboto Mono", monospace; letter-spacing: .08em; text-transform: uppercase;
+    padding: 6px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+  .chip.missing { color: var(--bad); border-color: #F2C6C2; }
+  .chip.stale { color: var(--warn); border-color: #EBD3AE; }
+  .chip.current { color: var(--ok); border-color: #BFE3CB; }
+  .co { display: grid; grid-template-columns: 1.1fr .5fr 2fr auto; gap: 18px; align-items: start; padding: 16px 0; border-top: 1px solid var(--line); }
+  .co:last-child { border-bottom: 1px solid var(--line); }
+  .co .name { font: 400 19px/1.3 "DM Sans", Arial, sans-serif; color: var(--ink); }
+  .co .issues { font-size: 14px; color: var(--body); min-width: 0; }
+  @media (max-width: 760px) { .co { grid-template-columns: 1fr auto; } .co .issues { grid-column: 1 / -1; } .co .chipcell { order: 2; } }
+
+  .form { display: grid; gap: 0; }
+  .field { display: grid; grid-template-columns: 220px 1fr; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .field label { font-weight: 500; color: var(--ink); font-size: 15px; }
+  .field .row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .field .row > :first-child { flex: 1 1 260px; min-width: 0; }
+  .field .when { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .field .when.old { color: var(--warn); }
+  .field .saved { font: 400 11px/1.6 "Roboto Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--ok); }
+  .field .err { font-size: 13px; color: var(--bad); }
+  @media (max-width: 760px) { .field { grid-template-columns: 1fr; gap: 8px; } }
+  .back { margin: 0 0 6px; }
+  .empty { color: var(--muted); padding: 30px 0; }
+  .toast { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 14px; display: none; z-index: 5; }
+  footer { font-size: 13px; color: var(--muted); padding: 30px 0; }
+  .hide { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="https://www.alloypartners.com/" target="_blank" rel="noopener"><img src="alloy-logo.svg" alt="Alloy"><span>Company Profiles</span></a>
+  <div class="who"><span id="who"></span><button id="signout" class="small ghost hide">Sign out</button></div>
+</div></header>
+
+<main class="wrap">
+  <section id="login" class="login hide">
+    <p class="eyebrow">Alloy Partners</p>
+    <h1>Sign in</h1>
+    <p class="lede">Enter your Alloy email and we'll send a one-time sign-in link.</p>
+    <form id="loginForm"><input type="email" id="email" required placeholder="you@alloypartners.com" autocomplete="email">
+      <button class="primary" type="submit">Email me a link</button></form>
+    <p id="loginMsg" class="meta"></p>
+  </section>
+
+  <section id="none" class="login hide">
+    <p class="eyebrow">Alloy Partners</p>
+    <h1>Not set up yet</h1>
+    <p class="lede">This page is for the people who keep company profiles current. Ask Mike to add you.</p>
+  </section>
+
+  <section id="list" class="hide">
+    <div class="hero">
+      <p class="eyebrow">Company profiles</p>
+      <h1>What we tell investors about each company</h1>
+      <p class="lede">Investor emails only use facts confirmed in the last 90 days. Most out of date first. Open a company to update it;
+        each change saves with today's date and the network picks it up overnight.</p>
+    </div>
+    <div class="counts" id="counts"></div>
+    <div id="companies"></div>
+  </section>
+
+  <section id="detail" class="hide">
+    <div class="hero" style="padding-bottom:10px">
+      <p class="back"><a href="#" id="backLink">All companies</a></p>
+      <h1 id="coName"></h1>
+      <p id="coHealth"></p>
+    </div>
+    <div id="form" class="form"></div>
+  </section>
+  <footer>Alloy Partners · Internal: only the people who keep profiles current can see this page.</footer>
+</main>
+<div class="toast" id="toast"></div>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const cfg = window.FOUNDER_INTROS;
+const sb = createClient(cfg.supabaseUrl, cfg.supabaseKey);
+const $ = (id) => document.getElementById(id);
+const S = { me: null, rows: [], leads: [], pending: {}, filter: "all" };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function toast(t) { const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = "none", 2200); }
+const LABEL = { missing: "Missing", stale: "Stale", current: "Current" };
+const RANK = { missing: 0, stale: 1, current: 2 };
+const days = (d) => d ? Math.floor((Date.now() - new Date(d + "T12:00:00")) / 864e5) : null;
+
+// The fields that matter to intros. Mirrors automation/profile_sync.py FIELDS; the server re-checks every value.
+const RAISING = [["unknown", "Unknown"], ["raising", "Raising now"], ["within-6-months", "Within 6 months"], ["not-raising", "Not raising"]];
+const YNU = [["unknown", "Unknown"], ["yes", "Yes"], ["no", "No"]];
+const FIELDS = [
+  ["Company", [
+    { k: "name", label: "Company name", type: "text", max: 120, get: (p) => p.name },
+    { k: "website", label: "Website", type: "url", max: 200, get: (p) => p.website },
+  ]],
+  ["What investors read", [
+    { k: "facts.one_liner", label: "One-liner", type: "area", max: 400, fact: "one_liner" },
+    { k: "facts.stage", label: "Stage", type: "text", max: 400, fact: "stage" },
+    { k: "facts.customers", label: "Customers", type: "area", max: 400, fact: "customers" },
+    { k: "facts.traction", label: "Traction", type: "area", max: 400, fact: "traction" },
+    { k: "facts.team", label: "Team", type: "area", max: 400, fact: "team" },
+  ]],
+  ["CEO", [
+    { k: "ceo.name", label: "CEO name", type: "text", max: 120, get: (p) => p.ceo?.name },
+    { k: "ceo.email", label: "CEO email", type: "email", max: 160, get: (p) => p.ceo?.email },
+    { k: "ceo.linkedin", label: "CEO LinkedIn", type: "url", max: 200, get: (p) => p.ceo?.linkedin },
+  ]],
+  ["Raise", [
+    { k: "lead", label: "Alloy lead", type: "lead", get: (p) => p.lead },
+    { k: "raising.status", label: "Raising", type: "select", opts: RAISING, get: (p) => p.raising?.status || "unknown", when: (p) => p.raising },
+    { k: "raising.round", label: "Round", type: "text", max: 80, get: (p) => p.raising?.round, when: (p) => p.raising },
+    { k: "ceo_requested_intros", label: "CEO asked for intros", type: "select", opts: YNU,
+      get: (p) => { const v = p.ceo_requested_intros?.value; return v === true ? "yes" : v === false ? "no" : "unknown"; },
+      when: (p) => p.ceo_requested_intros },
+  ]],
+];
+
+// ---------- sign-in (accounts exist already; the page never creates users) ----------
+const pre = new URLSearchParams(location.search).get("email");
+if (pre) $("email").value = pre;
+$("loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  $("loginMsg").textContent = "Sending...";
+  const { error } = await sb.auth.signInWithOtp({ email: $("email").value.trim(), options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+  $("loginMsg").textContent = error ? "We couldn't send a link to that address. Use your Alloy email, or ask Mike to add you." : "Check your inbox for a sign-in link.";
+};
+$("signout").onclick = async () => { await sb.auth.signOut(); location.href = location.pathname; };
+sb.auth.onAuthStateChange((_e, session) => { if (session && !S.me) start(session.user); });
+const { data: { session } } = await sb.auth.getSession();
+if (session) start(session.user); else $("login").classList.remove("hide");
+
+async function start(user) {
+  $("login").classList.add("hide"); $("who").textContent = user.email; $("signout").classList.remove("hide");
+  const { data: me } = await sb.from("profile_editors").select("email,name").maybeSingle();
+  if (!me) { $("none").classList.remove("hide"); return; }
+  S.me = me;
+  const [rows, opts, edits] = await Promise.all([
+    sb.from("company_profiles_live").select("slug,name,profile,health,synced_at"),
+    sb.from("profile_options").select("key,value"),
+    sb.from("company_profile_edits").select("slug,field,value,edited_at,result,synced_at").order("edited_at"),
+  ]);
+  S.rows = rows.data || [];
+  S.leads = (opts.data || []).find((o) => o.key === "leads")?.value || [];
+  for (const e of edits.data || []) if (!e.synced_at) (S.pending[e.slug] ||= {})[e.field] = e;   // saved, not synced yet
+  window.addEventListener("hashchange", route);
+  route();
+}
+
+// ---------- list ----------
+function route() {
+  const slug = location.hash.slice(1);
+  const row = S.rows.find((r) => r.slug === slug);
+  $("list").classList.toggle("hide", !!row); $("detail").classList.toggle("hide", !row);
+  if (row) renderDetail(row); else renderList();
+  window.scrollTo({ top: 0 });
+}
+function renderList() {
+  const sorted = [...S.rows].sort((a, b) => RANK[a.health.state] - RANK[b.health.state] || b.health.worst_age - a.health.worst_age
+    || a.name.localeCompare(b.name));
+  const n = (s) => S.rows.filter((r) => r.health.state === s).length;
+  $("counts").innerHTML = [["all", `All ${S.rows.length}`], ["missing", `Missing ${n("missing")}`], ["stale", `Stale ${n("stale")}`], ["current", `Current ${n("current")}`]]
+    .map(([k, t]) => `<button data-f="${k}" class="${S.filter === k ? "on" : ""}">${t}</button>`).join("");
+  $("counts").querySelectorAll("[data-f]").forEach((b) => b.onclick = () => { S.filter = b.dataset.f; renderList(); });
+  const list = sorted.filter((r) => S.filter === "all" || r.health.state === S.filter);
+  $("companies").innerHTML = list.length ? list.map((r) => {
+    const issues = r.health.issues.length ? r.health.issues.slice(0, 4).join("; ") + (r.health.issues.length > 4 ? ` and ${r.health.issues.length - 4} more` : "") : "Up to date";
+    const edited = S.pending[r.slug] ? ` <span class="meta">· changes saved, updating overnight</span>` : "";
+    return `<div class="co"><div class="name">${esc(r.name)}</div><div class="chipcell"><span class="chip ${r.health.state}">${LABEL[r.health.state]}</span></div>
+      <div class="issues">${esc(issues)}${edited}</div><div><a href="#${encodeURIComponent(r.slug)}"><button class="small">Update</button></a></div></div>`;
+  }).join("") : '<p class="empty">Nothing here.</p>';
+}
+
+// ---------- one company ----------
+function current(f, p) {
+  if (f.fact) { const x = p.facts?.[f.fact] || {}; return { value: x.text ?? "", as_of: x.as_of, source: x.source }; }
+  const block = f.when ? f.when(p) : null;
+  return { value: f.get(p) ?? "", as_of: block?.as_of, source: block?.source };
+}
+function whenText(c) {
+  if (!c.as_of && !c.source) return "";
+  const d = days(c.as_of);
+  const age = c.as_of ? `as of ${c.as_of}${d > 90 ? `, ${d} days ago` : ""}` : "no date";
+  return `<div class="when ${!c.as_of || d > 90 ? "old" : ""}">${esc(age)}${c.source ? ` · ${esc(c.source)}` : ""}</div>`;
+}
+function control(f, value) {
+  const id = `f_${f.k.replace(/\W/g, "_")}`;
+  if (f.type === "area") return `<textarea id="${id}" maxlength="${f.max}" rows="2">${esc(value)}</textarea>`;
+  if (f.type === "select" || f.type === "lead") {
+    const opts = f.type === "lead" ? [["", "No lead yet"], ...S.leads.map((n) => [n, n])] : f.opts;
+    return `<select id="${id}">${opts.map(([v, t]) => `<option value="${esc(v)}" ${String(value) === String(v) ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
+  }
+  const t = f.type === "email" ? "email" : f.type === "url" ? "url" : "text";
+  return `<input type="${t}" id="${id}" maxlength="${f.max}" value="${esc(value)}">`;
+}
+function renderDetail(row) {
+  const p = row.profile || {};
+  $("coName").textContent = row.name;
+  $("coHealth").innerHTML = `<span class="chip ${row.health.state}">${LABEL[row.health.state]}</span> <span class="meta" style="margin-left:8px">${esc(row.health.issues.join("; ") || "Up to date")}</span>`;
+  let html = "";
+  for (const [group, fields] of FIELDS) {
+    html += `<h2>${esc(group)}</h2>`;
+    for (const f of fields) {
+      const c = current(f, p), pend = S.pending[row.slug]?.[f.k];
+      const shown = pend ? (f.k === "ceo_requested_intros" ? pend.value : pend.value ?? "") : c.value;
+      html += `<div class="field" data-k="${esc(f.k)}"><label for="f_${f.k.replace(/\W/g, "_")}">${esc(f.label)}</label><div>
+        <div class="row">${control(f, shown)}<button class="small" data-save="${esc(f.k)}">Save</button></div>
+        ${pend ? `<div class="when">Saved ${new Date(pend.edited_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}, updating overnight</div>` : whenText(c)}
+        <div class="err"></div><div class="saved"></div></div></div>`;
+    }
+  }
+  $("form").innerHTML = html;
+  $("form").querySelectorAll("[data-save]").forEach((b) => b.onclick = () => save(row, b));
+}
+function check(f, v) {   // a friendly first check; profile_sync.py decides
+  if (f.k === "name" && !v) return "A company needs a name.";
+  if (!v) return "";
+  if (f.max && v.length > f.max) return `Keep it under ${f.max} characters.`;
+  if (/[<>]/.test(v)) return "No angle brackets, please.";
+  if (f.type === "email" && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v)) return "That doesn't look like an email address.";
+  if (f.type === "url" && !/^https?:\/\/\S+$/i.test(v)) return "Use the full address, starting with https://";
+  if (f.k === "ceo.linkedin" && !/linkedin\.com\//i.test(v)) return "Use their linkedin.com address.";
+  return "";
+}
+async function save(row, btn) {
+  const f = FIELDS.flatMap(([, fs]) => fs).find((x) => x.k === btn.dataset.save);
+  const box = btn.closest(".field"), el = box.querySelector("input, textarea, select");
+  const v = String(el.value || "").trim();
+  const problem = check(f, v);
+  box.querySelector(".err").textContent = problem;
+  if (problem) return;
+  btn.disabled = true;
+  const { error } = await sb.from("company_profile_edits").insert({ slug: row.slug, field: f.k, value: v });
+  btn.disabled = false;
+  if (error) { box.querySelector(".err").textContent = "That didn't save. Check your connection and try again."; return; }
+  (S.pending[row.slug] ||= {})[f.k] = { value: v, edited_at: new Date().toISOString() };
+  box.querySelector(".saved").textContent = "Saved. It updates overnight.";
+  toast("Saved");
+}
+$("backLink").onclick = (e) => { e.preventDefault(); history.pushState("", "", location.pathname + location.search); route(); };
+</script>
+</body>
+</html>
