@@ -91,9 +91,9 @@
 
   <section id="app" class="hide">
     <div class="hero">
-      <p class="eyebrow">Alloy founder network</p>
+      <p class="eyebrow" id="eyebrow">Alloy founder network</p>
       <h1 id="title">Share your LinkedIn connections</h1>
-      <p class="lede">Alloy founders help each other raise. When another founder in the portfolio needs an intro to an
+      <p class="lede" id="lede">Alloy founders help each other raise. When another founder in the portfolio needs an intro to an
         investor you know, we'll ask you first, privately, and only you decide whether to make it.</p>
     </div>
 
@@ -110,8 +110,16 @@
       <li><div>Choose <b>Download larger data archive</b> and click <b>Request archive</b>.</div></li>
       <li><div>LinkedIn emails you twice. The first email (minutes later) is a small archive <b>without</b> your connections.
         Wait for the second one, usually within 24 hours, then download that .zip.</div></li>
-      <li><div>Drop the .zip below as it is. You don't need to unzip it.</div></li>
+      <li><div>Drop the .zip below as it is. You don't need to unzip it. (Replying to our email with the zip attached works too.)</div></li>
     </ol>
+    <div id="googleSteps" class="hide">
+      <h2 style="margin-top:28px">Google Contacts (optional)</h2>
+      <ol class="steps">
+        <li><div>Open <a href="https://contacts.google.com/" target="_blank" rel="noopener">contacts.google.com</a> and click <b>Export</b>.</div></li>
+        <li><div>Pick <b>Contacts</b> (or <b>Other contacts</b> for people you've emailed), format <b>Google CSV</b>, then <b>Export</b>.</div></li>
+        <li><div>Drop that .csv below too.</div></li>
+      </ol>
+    </div>
 
     <label class="drop" id="drop">
       <input type="file" id="file" accept=".zip,.csv,application/zip,text/csv">
@@ -166,6 +174,13 @@ async function start(user) {
   if (!me) { $("none").classList.remove("hide"); return; }
   $("app").classList.remove("hide");
   $("title").textContent = `${me.person.split(" ")[0]}, share your LinkedIn connections`;
+  if (me.role === "team") {                     // an Alloy teammate: same flow, team wording, Google Contacts welcome
+    $("eyebrow").textContent = "Alloy investor network";
+    $("lede").textContent = "Your connections show the Alloy team who knows which investors, so every intro goes through "
+      + "the person with the real relationship. Only investor matches are kept, and nobody is contacted on your behalf.";
+    $("googleSteps").classList.remove("hide");
+    $("pick").textContent = "Choose a file";
+  }
   loadAsks();
   const { data: waiting } = await sb.storage.from("connections").list(S.email, { limit: 10 });
   if (waiting?.some((f) => f.id)) say("ok", "<b>Received.</b> We'll process it tonight. You can upload a newer export any time.");
@@ -205,7 +220,8 @@ drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
 drop.ondragleave = () => drop.classList.remove("over");
 drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); e.dataTransfer.files[0] && handle(e.dataTransfer.files[0]); };
 
-const looksLikeConnections = (text) => /First Name/i.test(text.slice(0, 4000)) && /Company/i.test(text.slice(0, 4000));
+const looksLikeConnections = (text) => /First Name/i.test(text.slice(0, 4000)) && /Company|Organization/i.test(text.slice(0, 4000));
+const isGoogle = (text) => /E-mail 1/i.test(text.slice(0, 4000));   // Google Contacts CSV; network_sync reads the file name
 
 async function handle(file) {
   $("pick").disabled = true;
@@ -230,7 +246,7 @@ async function handle(file) {
     const rows = csv.split(/\r?\n/).filter((l) => l.trim()).length;
     say("", `Uploading your connections list (${rows.toLocaleString()} lines)...`);
     const { error } = await sb.storage.from("connections")
-      .upload(`${S.email}/connections-${Date.now()}.csv`, new Blob([csv], { type: "text/csv" }), { contentType: "text/csv" });
+      .upload(`${S.email}/${isGoogle(csv) ? "google" : "connections"}-${Date.now()}.csv`, new Blob([csv], { type: "text/csv" }), { contentType: "text/csv" });
     if (error) { say("bad", "<b>The upload didn't go through.</b> Refresh and try again, or email mike@alloypartners.com."); return; }
     say("ok", "<b>Received. Thank you.</b> We'll process it tonight and delete the file. Nothing else to do.");
   } catch (err) {
