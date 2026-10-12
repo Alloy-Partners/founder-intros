@@ -133,7 +133,7 @@
   .status { display: inline-block; font: 400 11px/1 "Roboto Mono", monospace; letter-spacing: .08em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
   .status.accepted, .status.meeting { color: var(--ok); border-color: #BFE3CB; }
   .status.passed { color: var(--bad); border-color: #F2C6C2; }
-  .status.not_available { color: var(--muted); }
+  .status.not_available, .status.no_response { color: var(--muted); }
   .outcome { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
   .outcome button { padding: 6px 11px; font-size: 12px; border-color: var(--line); }
   .outcome button.on { background: var(--ok); color: #fff; border-color: var(--ok); }
@@ -273,7 +273,7 @@ const isStaging = () => String(S.company?.slug || "").endsWith("-staging");
 const SECTION = { new: ["Not on your list yet", "Investors you're not already tracking"], on_your_list: ["Already on your list", "A warmer route in"], looser_fit: ["Looser fit", "Worth a look, not a priority"] };
 const TIERS = [["Strong", "Strongest fits", "Start here"], ["Good", "Good fits", "Worth a conversation"], ["Possible", "Possible fits", "A looser fit; your call"]];
 const CHOICES = [["request", "Request intro"], ["in_touch", "Already in touch"], ["passed", "Already passed"], ["skip", "Skip"]];
-const STATUS = { waiting_on_founder: "Waiting on your email", with_alloy: "With Alloy", asked: "Asked", accepted: "Accepted", meeting: "Meeting", passed: "Passed", not_available: "Not available" };
+const STATUS = { waiting_on_founder: "Waiting on your email", with_alloy: "With Alloy", asked: "Asked", accepted: "Accepted", meeting: "Meeting", passed: "Passed", not_available: "Not available", no_response: "No response" };
 
 // ---------- text safety ----------
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
