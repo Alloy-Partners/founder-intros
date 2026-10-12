@@ -182,6 +182,8 @@
         Nothing goes out until your Alloy connector reviews and sends it.</p>
     </div>
 
+    <p id="stagingBanner" class="callout hide"></p>
+
     <nav class="steps">
       <button data-step="blurb" class="on"><span class="n">01</span>Blurb &amp; deck</button>
       <button data-step="pick"><span class="n">02</span>Choose intros</button>
@@ -263,6 +265,7 @@ const cfg = window.FOUNDER_INTROS;
 const sb = createClient(cfg.supabaseUrl, cfg.supabaseKey);
 const $ = (id) => document.getElementById(id);
 const S = { user: null, company: null, options: [], choices: {}, settings: {}, status: {} };
+const isStaging = () => String(S.company?.slug || "").endsWith("-staging");
 const SECTION = { new: ["Not on your list yet", "Investors you're not already tracking"], on_your_list: ["Already on your list", "A warmer route in"], looser_fit: ["Looser fit", "Worth a look, not a priority"] };
 const TIERS = [["Strong", "Strongest fits", "Start here"], ["Good", "Good fits", "Worth a conversation"], ["Possible", "Possible fits", "A looser fit; your call"]];
 const CHOICES = [["request", "Request intro"], ["in_touch", "Already in touch"], ["passed", "Already passed"], ["skip", "Skip"]];
@@ -327,6 +330,14 @@ async function start(user) {
   $("app").classList.remove("hide");
   if (error || !companies?.length) { $("title").textContent = "Nothing shared yet"; $("step-pick").innerHTML = '<p class="empty">No intros have been shared with this email yet.</p>'; return; }
   S.company = companies[0];
+  const banner = $("stagingBanner");
+  if (isStaging()) {
+    banner.classList.remove("hide");
+    banner.innerHTML = "<b>Staging.</b> This is a copy of Suvi so you can sign in with your Alloy email. Edits stay on this copy. Submit is off, so nothing is drafted, and Kelly's page is unchanged.";
+  } else {
+    banner.classList.add("hide");
+    banner.textContent = "";
+  }
   const slug = S.company.slug;
   const [opts, ch, st, stat, subs] = await Promise.all([
     sb.from("intro_options").select("*").eq("company_slug", slug).order("rank"),
@@ -558,12 +569,17 @@ function renderReview() {
     html += `<div class="email"><div class="head"><b>${esc(o.firm_name)}</b><span class="meta">${how}</span><span>Subject: ${esc(e.subject)}</span></div>
       <div class="body">${e.html}</div><div class="foot"><span class="note">${note}</span></div></div>`;
   }
-  html += `<p style="margin-top:26px"><button class="primary" id="submit" ${sectionsOf(S.settings).length && fresh.length && !gaps.length ? "" : "disabled"}>${fresh.length ?
+  if (isStaging()) {
+    html += `<p class="warn" style="margin-top:26px"><b>Submit is off on staging.</b> You can read these emails. This copy does not draft or send, and it does not change the live Suvi page.</p>`;
+  } else {
+    html += `<p style="margin-top:26px"><button class="primary" id="submit" ${sectionsOf(S.settings).length && fresh.length && !gaps.length ? "" : "disabled"}>${fresh.length ?
       `Submit ${fresh.length} ${done ? "new " : ""}intro request${fresh.length === 1 ? "" : "s"}` : "Nothing new to submit"}</button></p>
     <p class="meta">Submitting sends your picks to Alloy. Each connector reviews their note and sends it themselves; nothing is sent automatically.</p>`;
+  }
   $("step-review").innerHTML = html;
   const sub = $("submit");
   if (sub) sub.onclick = async () => {
+    if (isStaging()) return;
     sub.disabled = true;
     for (const o of fresh) if (!(await stampChoice(o.id, "submitted_at"))) { toast("Couldn't submit. Try again."); sub.disabled = false; return; }
     const { error } = await sb.from("submissions").insert({ company_slug: S.company.slug });
