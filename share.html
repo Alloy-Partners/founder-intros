@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Founder Network | Alloy Partners</title>
+<link rel="icon" href="alloy-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Same Alloy styling as index.html and check.html. */
+  :root {
+    --ink: #171717; --body: #26262B; --muted: #6B6B73; --line: #E6E6E6; --wash: #F4F4F4;
+    --ultramarine: #2929E2; --ok: #1F7A3F; --warn: #9A5B00; --bad: #C0362C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--body); }
+  body { font: 300 16px/1.6 "DM Sans", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--ultramarine); text-underline-offset: 3px; }
+  b, strong { font-weight: 500; color: var(--ink); }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 30px; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 92px; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 14px; color: var(--ink); text-decoration: none; }
+  .logo img { height: 34px; }
+  .logo span { font: 400 13px/1 "Roboto Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    padding-left: 14px; border-left: 1px solid var(--line); }
+  @media (max-width: 640px) { .logo span { display: none; } }
+  .who { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--muted); min-width: 0; }
+  .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  main { padding-bottom: 120px; }
+  .eyebrow { font: 400 12px/1 "Roboto Mono", monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--ultramarine); margin: 0 0 18px; }
+  h1 { font: 400 clamp(36px, 6vw, 60px)/1.05 "DM Sans", Arial, sans-serif; letter-spacing: -0.035em; color: var(--ink); margin: 0 0 22px; }
+  h2 { font: 400 22px/1.2 "DM Sans", Arial, sans-serif; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 8px; }
+  .lede { font-size: 18px; line-height: 1.55; margin: 0; }
+  .meta { font-size: 14px; color: var(--muted); }
+  .hero { padding: 30px 0 30px; }
+  button { font: 400 15px/1 "DM Sans", Arial, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--ink);
+    border-radius: 999px; padding: 11px 18px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  button:hover { background: var(--ink); color: #fff; }
+  button.primary { background: var(--ink); color: #fff; } button.primary:hover { background: var(--ultramarine); border-color: var(--ultramarine); }
+  button.ghost { border-color: var(--line); } button.ghost:hover { background: var(--wash); color: var(--ink); }
+  button.small { padding: 7px 12px; font-size: 13px; }
+  button:disabled { opacity: .5; cursor: default; }
+  input[type=email] { font: 300 15px/1.4 "DM Sans", Arial, sans-serif; color: var(--ink); width: 100%;
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  input:focus { outline: 2px solid var(--ultramarine); outline-offset: 1px; }
+  .login { max-width: 520px; padding: 40px 0 80px; }
+  .login form { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; } .login input { flex: 1 1 260px; }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 44px 1fr; gap: 10px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .steps li::before { content: counter(s, decimal-leading-zero); font: 400 12px/1.9 "Roboto Mono", monospace; color: var(--ultramarine); }
+  .drop { margin: 30px 0 0; border: 1.5px dashed #CFCFF8; border-radius: 10px; padding: 34px 24px; text-align: center; background: #FAFAFF; transition: border-color .15s, background .15s; }
+  .drop.over { border-color: var(--ultramarine); background: #F1F1FE; }
+  .drop input { display: none; }
+  .drop p { margin: 12px 0 0; }
+  .status { margin: 22px 0 0; padding: 4px 0 4px 14px; border-left: 2px solid var(--line); }
+  .status.ok { border-color: var(--ok); } .status.warn { border-color: var(--warn); } .status.bad { border-color: var(--bad); }
+  .private { margin: 40px 0 0; }
+  .private ul { margin: 8px 0 0; padding-left: 20px; } .private li { margin: 4px 0; }
+  footer { font-size: 13px; color: var(--muted); padding: 30px 0; }
+  .hide { display: none !important; }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="https://www.alloypartners.com/" target="_blank" rel="noopener"><img src="alloy-logo.svg" alt="Alloy"><span>Founder Network</span></a>
+  <div class="who"><span id="who"></span><button id="signout" class="small ghost hide">Sign out</button></div>
+</div></header>
+
+<main class="wrap">
+  <section id="login" class="login hide">
+    <p class="eyebrow">Alloy founders</p>
+    <h1>Sign in</h1>
+    <p class="lede">Enter the email Alloy invited and we'll send a one-time sign-in link.</p>
+    <form id="loginForm"><input type="email" id="email" required placeholder="you@yourcompany.com" autocomplete="email">
+      <button class="primary" type="submit">Email me a link</button></form>
+    <p id="loginMsg" class="meta"></p>
+  </section>
+
+  <section id="app" class="hide">
+    <div class="hero">
+      <p class="eyebrow">Alloy founder network</p>
+      <h1 id="title">Share your LinkedIn connections</h1>
+      <p class="lede">Alloy founders help each other raise. When another founder in the portfolio needs an intro to an
+        investor you know, we'll ask you first, privately, and only you decide whether to make it.</p>
+    </div>
+
+    <h2>How to get the file from LinkedIn</h2>
+    <ol class="steps">
+      <li><div>On LinkedIn, open <a href="https://www.linkedin.com/mypreferences/d/download-my-data" target="_blank" rel="noopener">Settings &rarr; Data privacy &rarr; Get a copy of your data</a>.</div></li>
+      <li><div>Choose <b>Download larger data archive</b> and click <b>Request archive</b>.</div></li>
+      <li><div>LinkedIn emails you twice. The first email (minutes later) is a small archive <b>without</b> your connections.
+        Wait for the second one, usually within 24 hours, then download that .zip.</div></li>
+      <li><div>Drop the .zip below as it is. You don't need to unzip it.</div></li>
+    </ol>
+
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept=".zip,.csv,application/zip,text/csv">
+      <button class="primary" type="button" id="pick">Choose the LinkedIn .zip</button>
+      <p class="meta">or drag it here. Only the connections list is uploaded; everything else in the archive stays on your computer.</p>
+    </label>
+    <div id="status" class="status hide"></div>
+
+    <div class="private">
+      <h2>What happens with it</h2>
+      <ul class="meta">
+        <li>This page reads <b>Connections.csv</b> from the archive in your browser and uploads only that file. Your messages, phone numbers and profile never leave your computer.</li>
+        <li>We keep only the people who work at investment firms. The rest of the list is deleted the same night, along with the file itself.</li>
+        <li>Nobody is contacted on your behalf. A path through you always starts with Alloy asking you, and you can say no.</li>
+        <li>Other founders never see your connections. Want something removed, or everything? Email <a href="mailto:mike@alloypartners.com">mike@alloypartners.com</a> and it's gone.</li>
+      </ul>
+    </div>
+  </section>
+  <section id="none" class="login hide">
+    <p class="eyebrow">Alloy founders</p>
+    <h1>Not set up yet</h1>
+    <p class="lede">This email isn't on the founder network list. Email <a href="mailto:mike@alloypartners.com">mike@alloypartners.com</a> and we'll add you.</p>
+  </section>
+  <footer>Alloy Partners · Your file is visible only to you and the Alloy investor-network admins.</footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const cfg = window.FOUNDER_INTROS;
+const sb = createClient(cfg.supabaseUrl, cfg.supabaseKey);
+const $ = (id) => document.getElementById(id);
+const S = { email: null };
+
+// ---------- auth (same flow as check.html: accounts are created by team.py add-founder, never here) ----------
+const pre = new URLSearchParams(location.search).get("email");
+if (pre) $("email").value = pre;
+$("loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  $("loginMsg").textContent = "Sending...";
+  const { error } = await sb.auth.signInWithOtp({ email: $("email").value.trim(), options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+  $("loginMsg").textContent = error ? "We couldn't send a link to that address. Use the email Alloy invited, or email mike@alloypartners.com." : "Check your inbox for a sign-in link.";
+};
+$("signout").onclick = async () => { await sb.auth.signOut(); location.href = location.pathname; };
+sb.auth.onAuthStateChange((_e, session) => { if (session && !S.email) start(session.user); });
+const { data: { session } } = await sb.auth.getSession();
+if (session) start(session.user); else $("login").classList.remove("hide");
+
+async function start(user) {
+  S.email = user.email.toLowerCase();
+  $("login").classList.add("hide"); $("who").textContent = user.email; $("signout").classList.remove("hide");
+  const { data: me } = await sb.from("network_contributors").select("*").maybeSingle();
+  if (!me) { $("none").classList.remove("hide"); return; }
+  $("app").classList.remove("hide");
+  $("title").textContent = `${me.person.split(" ")[0]}, share your LinkedIn connections`;
+  const { data: waiting } = await sb.storage.from("connections").list(S.email, { limit: 10 });
+  if (waiting?.some((f) => f.id)) say("ok", "<b>Received.</b> We'll process it tonight. You can upload a newer export any time.");
+  else if (me.ingested_at) say("ok", `<b>Received ${new Date(me.ingested_at).toLocaleDateString()}. Thank you.</b>`
+    + (me.investor_matches != null ? ` ${me.investor_matches} of your connections work at investment firms.` : "")
+    + " You can upload a newer export any time.");
+}
+
+// ---------- the file: pull Connections.csv out of the archive, upload only that ----------
+function say(kind, html) { const el = $("status"); el.className = `status ${kind}`; el.innerHTML = html; }
+$("pick").onclick = () => $("file").click();
+$("file").onchange = () => $("file").files[0] && handle($("file").files[0]);
+const drop = $("drop");
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); e.dataTransfer.files[0] && handle(e.dataTransfer.files[0]); };
+
+const looksLikeConnections = (text) => /First Name/i.test(text.slice(0, 4000)) && /Company/i.test(text.slice(0, 4000));
+
+async function handle(file) {
+  $("pick").disabled = true;
+  try {
+    let csv;
+    if (/\.csv$/i.test(file.name)) {
+      csv = await file.text();
+    } else {
+      say("", "Reading the archive...");
+      const zip = await JSZip.loadAsync(file);
+      const entry = Object.values(zip.files).find((f) => !f.dir && /(^|\/)Connections\.csv$/i.test(f.name));
+      if (!entry) {
+        const basic = Object.keys(zip.files).some((n) => /(^|\/)Profile\.csv$/i.test(n));
+        say("warn", basic
+          ? "<b>This is LinkedIn's first, smaller archive: it doesn't include your connections.</b> LinkedIn sends a second email, usually within 24 hours. Upload that .zip instead."
+          : "<b>No Connections.csv in this file.</b> Make sure it's the LinkedIn data archive (.zip).");
+        return;
+      }
+      csv = await entry.async("string");
+    }
+    if (!looksLikeConnections(csv)) { say("bad", "<b>This doesn't look like a LinkedIn connections list.</b> Upload the .zip from LinkedIn as it arrived."); return; }
+    const rows = csv.split(/\r?\n/).filter((l) => l.trim()).length;
+    say("", `Uploading your connections list (${rows.toLocaleString()} lines)...`);
+    const { error } = await sb.storage.from("connections")
+      .upload(`${S.email}/connections-${Date.now()}.csv`, new Blob([csv], { type: "text/csv" }), { contentType: "text/csv" });
+    if (error) { say("bad", "<b>The upload didn't go through.</b> Refresh and try again, or email mike@alloypartners.com."); return; }
+    say("ok", "<b>Received. Thank you.</b> We'll process it tonight and delete the file. Nothing else to do.");
+  } catch (err) {
+    say("bad", "<b>We couldn't read that file.</b> Upload the .zip from LinkedIn as it arrived.");
+  } finally {
+    $("pick").disabled = false; $("file").value = "";
+  }
+}
+</script>
+</body>
+</html>
