@@ -370,11 +370,24 @@ function renderPick() {
       <span><b>${nn} new investor${nn === 1 ? "" : "s"}</b> added since you submitted. They're marked New.</span>
       <button class="small" id="onlyNew">${S.onlyNew ? "Show all firms" : "Show only new"}</button></div>` : "";
   html += '<p class="meta" style="margin:0">Mark every firm, including the ones you skip: it tells us who not to contact.</p>';
+  // a returning founder: what they can still ask for comes first; what they already asked for sits below, with status
+  const asked = (o) => !!S.choices[o.id]?.submitted_at && S.choices[o.id]?.choice === "request";
+  if (S.submittedAt) html += `<div class="section-h"><h2 style="font-size:28px">New intros</h2><span class="meta">Firms you haven't asked for yet</span></div>`;
   for (const [tier, title, sub] of TIERS) {   // best intros first; within a tier, the stronger relationship first
-    const rows = offered().filter((o) => o.fit_rating === tier && (!S.onlyNew || isNew(o)));
+    const rows = offered().filter((o) => o.fit_rating === tier && (!S.onlyNew || isNew(o)) && !(S.submittedAt && asked(o)));
     if (!rows.length) continue;
     html += `<div class="section-h"><h2>${title}</h2><span class="meta">${rows.length} firm${rows.length === 1 ? "" : "s"} · ${sub}</span></div>`;
     for (const o of rows) html += rowHtml(o);
+  }
+  const past = S.submittedAt ? S.options.filter(asked) : [];
+  if (past.length) {
+    html += `<div class="section-h" style="margin-top:46px"><h2 style="font-size:28px">Already requested</h2><span class="meta">${past.length} intro${past.length === 1 ? "" : "s"} · live status</span></div>`;
+    for (const o of past) {
+      const st = S.status[o.id], when = new Date(S.choices[o.id].submitted_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      html += `<div class="row" style="grid-template-columns:1.4fr 1fr .8fr;padding:16px 0"><div><div class="firm" style="font-size:18px;margin:0">${link(o.firm_name, o.firm_url)}</div>
+        <div class="meta">${link(o.investor_name, o.investor_url)} · through ${esc(o.alloy_person)}${o.via ? ` via ${esc(o.via)}` : ""}</div></div>
+        <div class="meta">Requested ${when}</div><div><span class="status ${st || "with_alloy"}">${st ? STATUS[st] : "Requested"}</span></div></div>`;
+    }
   }
   el.innerHTML = html;
   if ($("onlyNew")) $("onlyNew").onclick = () => { S.onlyNew = !S.onlyNew; renderPick(); };
@@ -576,15 +589,31 @@ function renderReview() {
   if (isStaging()) {
     html += `<p class="warn" style="margin-top:26px"><b>Submit is off on staging.</b> You can read these emails. This copy does not draft or send, and it does not change the live Suvi page.</p>`;
   } else {
-    html += `<p style="margin-top:26px"><button class="primary" id="submit" ${sectionsOf(S.settings).length && fresh.length && !gaps.length ? "" : "disabled"}>${fresh.length ?
+    const dk = S.settings.deck_mode === "link" && S.settings.deck_link ? link("Deck link", S.settings.deck_link)
+      : S.settings.deck_mode === "attachment" && S.settings.deck_path ? "Deck attached (PDF)" : "No deck (investors can ask)";
+    const intro = toText(sectionsOf(S.settings).map(([h]) => h).join("")).slice(0, 220);
+    html += `<div class="callout" style="margin-top:26px"><b>Before you send these: is everything still current?</b>
+      <p class="meta" style="margin:8px 0">Investors see this exactly as it is now. Last confirmed: ${S.settings.details_confirmed_at ? new Date(S.settings.details_confirmed_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "never"}.</p>
+      <ul style="margin:0 0 10px;padding-left:20px"><li><b>Your intro</b>: ${escT(intro)}${intro.length >= 220 ? "..." : ""}</li>
+        <li><b>Deck</b>: ${dk}</li><li><b>Your email for intros</b>: ${escT(S.user.email)}</li></ul>
+      <p style="margin:0;display:flex;gap:14px;flex-wrap:wrap;align-items:center"><label><input type="checkbox" id="confirmCurrent"> Yes, these are current</label>
+        <button class="small" id="editDetails">Edit in step 01</button></p></div>`;
+    html += `<p style="margin-top:18px"><button class="primary" id="submit" disabled data-ready="${sectionsOf(S.settings).length && fresh.length && !gaps.length ? 1 : 0}">${fresh.length ?
       `Submit ${fresh.length} ${done ? "new " : ""}intro request${fresh.length === 1 ? "" : "s"}` : "Nothing new to submit"}</button></p>
     <p class="meta">Submitting sends your picks to Alloy. Each connector reviews their note and sends it themselves; nothing is sent automatically.</p>`;
   }
   $("step-review").innerHTML = html;
   const sub = $("submit");
+  if ($("editDetails")) $("editDetails").onclick = () => go("blurb");
+  if ($("confirmCurrent")) $("confirmCurrent").onchange = (ev) => { sub.disabled = !(ev.target.checked && sub.dataset.ready === "1"); };
   if (sub) sub.onclick = async () => {
     if (isStaging()) return;
     sub.disabled = true;
+    const confirmedAt = new Date().toISOString();       // the founder re-confirmed their intro, deck and email just now
+    const cs = await sb.from("founder_settings").upsert({ ...S.settings, company_slug: S.company.slug, details_confirmed_at: confirmedAt,
+      updated_by: S.user.email, updated_at: confirmedAt }, { onConflict: "company_slug" });
+    if (cs.error) { toast("Couldn't save your confirmation. Try again."); sub.disabled = false; return; }
+    S.settings.details_confirmed_at = confirmedAt;
     for (const o of fresh) if (!(await stampChoice(o.id, "submitted_at"))) { toast("Couldn't submit. Try again."); sub.disabled = false; return; }
     const { error } = await sb.from("submissions").insert({ company_slug: S.company.slug });
     if (error) { toast("Couldn't submit. Try again."); sub.disabled = false; return; }
