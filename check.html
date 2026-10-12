@@ -106,10 +106,10 @@
 
 <main class="wrap">
   <section id="login" class="login hide">
-    <p class="eyebrow">Alloy team</p>
+    <p class="eyebrow">Alloy Partners</p>
     <h1>Sign in</h1>
-    <p class="lede">Enter your Alloy email and we'll send a one-time sign-in link.</p>
-    <form id="loginForm"><input type="email" id="email" required placeholder="you@alloypartners.com" autocomplete="email">
+    <p class="lede">Enter the email Alloy invited and we'll send a one-time sign-in link.</p>
+    <form id="loginForm"><input type="email" id="email" required placeholder="you@company.com" autocomplete="email">
       <button class="primary" type="submit">Email me a link</button></form>
     <p id="loginMsg" class="meta"></p>
   </section>
@@ -118,7 +118,7 @@
     <div class="hero">
       <p class="eyebrow">Relationship Check</p>
       <h1 id="title"></h1>
-      <p class="lede">These are investors we think you know, strongest signal first, then firms our live raises need where nobody at Alloy has a path yet.
+      <p class="lede" id="lede">These are investors we think you know, strongest signal first, then firms our live raises need where nobody at Alloy has a path yet.
         Rate each one; add a note if there's context worth knowing. <b>Everything saves as you click</b>: stop and come back any time.
         Notes stay inside Alloy and never reach a founder.</p>
       <p class="meta" id="due"></p>
@@ -140,7 +140,7 @@
     <div id="rows"></div>
     <div id="finished" class="done hide"><b>All rated. Thank you.</b> Your answers are in; Alloy picks them up automatically. Change anything any time.</div>
   </section>
-  <footer>Alloy Partners · Internal: your ratings and notes are visible only to you and the Alloy investor-network admins.</footer>
+  <footer id="foot">Alloy Partners · Internal: your ratings and notes are visible only to you and the Alloy investor-network admins.</footer>
 </main>
 <div class="toast" id="toast"></div>
 
@@ -169,7 +169,7 @@ $("loginForm").onsubmit = async (e) => {
   e.preventDefault();
   $("loginMsg").textContent = "Sending...";
   const { error } = await sb.auth.signInWithOtp({ email: $("email").value.trim(), options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
-  $("loginMsg").textContent = error ? "We couldn't send a link to that address. Use your Alloy email, or ask Mike to add you." : "Check your inbox for a sign-in link.";
+  $("loginMsg").textContent = error ? "We couldn't send a link to that address. Use the email Alloy invited, or email mike@alloypartners.com." : "Check your inbox for a sign-in link.";
 };
 $("signout").onclick = async () => { await sb.auth.signOut(); location.href = location.pathname; };
 sb.auth.onAuthStateChange((_e, session) => { if (session && !S.check) start(session.user); });
@@ -181,6 +181,8 @@ async function start(user) {
   const { data: checks } = await sb.from("rc_checks").select("*");
   if (!checks?.length) { S.check = {}; $("title").textContent = "Nothing to rate yet"; $("rows").innerHTML = '<p class="empty">No Relationship Check has been set up for this email.</p>'; return; }
   S.check = checks[0];
+  const { data: founder } = await sb.from("network_contributors").select("email").maybeSingle();
+  if (founder) founderCopy();
   $("title").textContent = `${S.check.person.split(" ")[0]}, who do you know?`;
   $("due").textContent = S.check.due ? `Please finish by ${S.check.due}.` : "";
   // Supabase returns at most 1,000 rows per request: page through so long lists (Nammy's 1,036) load whole
@@ -194,6 +196,17 @@ async function start(user) {
   }
   S.rows = rows;
   render();
+}
+
+// ---------- founder version (a portfolio founder rating their own LinkedIn ties) ----------
+function founderCopy() {
+  S.founder = true;
+  $("lede").innerHTML = "These are investors in your LinkedIn connections. Tell us how well you actually know each one, so that "
+    + "when another Alloy founder needs an intro, we only ever ask you about real relationships. <b>Everything saves as you click</b>: "
+    + "stop and come back any time. Mark anyone <b>Private</b> and we'll never ask you about them.";
+  $("foot").textContent = "Alloy Partners · Your ratings and notes are visible only to you and Alloy's investor-network team. Other founders never see them.";
+  SCALE[4][3] = "We'll never ask you about them";
+  $("scale").innerHTML = SCALE.map(([, l, m, t], i) => `<div><b><span class="k">${i + 1}</span>${l}</b>${esc(m)}. ${esc(t)}.</div>`).join("");
 }
 
 // ---------- render ----------
@@ -235,7 +248,7 @@ function render() {
   const confirm = list.filter((r) => r.kind === "confirm"), gaps = list.filter((r) => r.kind === "gap");
   let i = 0;
   const block = (h, sub, rs) => rs.length ? `<div class="group-h"><h2>${h}</h2><p class="meta">${sub}</p></div>` + rs.map((r) => rowHtml(r, i++)).join("") : "";
-  $("rows").innerHTML = block("Investors we think you know", "From your email, calendar, LinkedIn and past intros. Confirm or correct.", confirm)
+  $("rows").innerHTML = block("Investors we think you know", S.founder ? "From your LinkedIn connections. Confirm or correct." : "From your email, calendar, LinkedIn and past intros. Confirm or correct.", confirm)
     + block("Anyone there?", "Firms our live raises need where no one at Alloy has a path. If you know someone, add their name and rate it.", gaps)
     || `<p class="empty">${S.filter === "todo" ? "Nothing left to rate." : "Nothing here yet."}</p>`;
   progress();
