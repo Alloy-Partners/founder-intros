@@ -526,6 +526,17 @@ function deck(mode) {   // never silent: investors expect to know about the deck
   return ["Happy to share the deck on request.", "<p>Happy to share the deck on request.</p>"];
 }
 const P = (t) => `<p>${escT(t)}</p>`;
+function reasonPhrase(hook, firm) {   // mirrors founder_emails.reason_phrase
+  let h = String(hook || "").trim().replace(/\.$/, "");
+  if (!h) return "";
+  const m = h.match(/^given\s+(.+?),\s*i\s+thought\b/i);
+  if (m) h = m[1]; else if (/\bi thought\b/i.test(h)) return "";
+  if (firm) h = h.replace(new RegExp("\\b" + firm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "['’]s\\s+", "i"), "your ");
+  const parts = h.split(/,\s+and\s+|\s+and\s+(?=your\b)/).map((x) => x.trim()).filter(Boolean);
+  let pick = parts.find((x) => /invest|portfolio|backed|co-invest/i.test(x)) || parts[0] || h;
+  pick = pick.replace(/^(the\s+)?firm['’]s\s+/i, "your ");
+  return pick.slice(0, 140).replace(/[ ,;]+$/, "");
+}
 function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6 deck, close
   const c = S.choices[o.id] || {};
   const send = c.send_mode || S.settings.default_send_mode || "alloy_direct";
@@ -537,20 +548,23 @@ function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6
   const ceoH = li ? `<a href="${esc(li)}">${escT(ceo)}</a>` : escT(ceo), coH = site ? `<a href="${esc(site)}">${escT(co)}</a>` : escT(co);
   const secs = sectionsOf(S.settings);
   if (send === "alloy_direct") {
-    const hello = `Hi ${first(o.investor_name)} -`, tail = origin ? `, ${origin}` : "";
-    const ask = `Would you be open to an intro to ${ceo}, ${title} of ${co}, one of our portfolio companies at Alloy Partners${tail}?`;
-    const askH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}, one of our portfolio companies at Alloy Partners${escT(tail)}?</p>`;
-    const why = o.email_hook || "", close = `If so, I'm happy to connect you and ${first(ceo)}.`;
+    // Keep in step with founder_emails.opening / reason_phrase (investornetwork): the ask, then one casual reason.
+    const hello = `Hi ${first(o.investor_name)} -`;
+    const ask = `Would you be open to an intro to ${ceo}, ${title} of ${co}?`;
+    const askH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}?</p>`;
+    const why = reasonPhrase(o.email_hook, o.firm_name);
+    const line = why ? `I thought of you and ${o.firm_name} given ${why}.` : "";
+    const close = `If so, I'm happy to connect you and ${first(ceo)}.`;
     return { send, subject: `Intro to ${ceo}, ${title} of ${co}?`,
-      text: [hello, ask, ...secs.map(([, t]) => t), ...(why ? [why] : []), deckT, close, `Thanks!\n${first(o.alloy_person)}`].join("\n\n"),
-      html: P(hello) + askH + secs.map(([h]) => h).join("") + (why ? P(why) : "") + deckH + P(close) + `<p>Thanks!<br>${escT(first(o.alloy_person))}</p>` };
+      text: [hello, ask, ...(line ? [line] : []), ...secs.map(([, t]) => t), deckT, close, `Thanks!\n\n${first(o.alloy_person)}`].join("\n\n"),
+      html: P(hello) + askH + (line ? P(line) : "") + secs.map(([h]) => h).join("") + deckH + P(close) + `<p>Thanks!</p><p>${escT(first(o.alloy_person))}</p>` };
   }
   const hello = `Hi ${first(o.alloy_person)} -`;
   const ask = `Would you be open to introducing me to ${o.investor_name} at ${o.firm_name}? Below is a short note you can forward.`;
   const toInv = `${first(o.investor_name)} -`;
   return { send, toEmail: o.alloy_email, subject: `Intro to ${o.investor_name} at ${o.firm_name}?`,
-    text: [hello, ask, toInv, ...secs.map(([, t]) => t), deckT, `Thank you!\n${first(ceo)}`].join("\n\n"),
-    html: P(hello) + P(ask) + P(toInv) + secs.map(([h]) => h).join("") + deckH + `<p>Thank you!<br>${escT(first(ceo))}</p>` };
+    text: [hello, ask, toInv, ...secs.map(([, t]) => t), deckT, `Thank you!\n\n${first(ceo)}`].join("\n\n"),
+    html: P(hello) + P(ask) + P(toInv) + secs.map(([h]) => h).join("") + deckH + `<p>Thank you!</p><p>${escT(first(ceo))}</p>` };
 }
 function renderReview() {
   const list = requested();
