@@ -133,6 +133,10 @@
   .status { display: inline-block; font: 400 11px/1 "Roboto Mono", monospace; letter-spacing: .08em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
   .status.accepted, .status.meeting { color: var(--ok); border-color: #BFE3CB; }
   .status.passed { color: var(--bad); border-color: #F2C6C2; }
+  .status.not_available { color: var(--muted); }
+  .outcome { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .outcome button { padding: 6px 11px; font-size: 12px; border-color: var(--line); }
+  .outcome button.on { background: var(--ok); color: #fff; border-color: var(--ok); }
   .status.waiting_on_founder { color: var(--warn); border-color: #EBD3AE; }
   .status.asked, .status.with_alloy { color: var(--ultramarine); border-color: #CFCFF8; }
 
@@ -269,7 +273,7 @@ const isStaging = () => String(S.company?.slug || "").endsWith("-staging");
 const SECTION = { new: ["Not on your list yet", "Investors you're not already tracking"], on_your_list: ["Already on your list", "A warmer route in"], looser_fit: ["Looser fit", "Worth a look, not a priority"] };
 const TIERS = [["Strong", "Strongest fits", "Start here"], ["Good", "Good fits", "Worth a conversation"], ["Possible", "Possible fits", "A looser fit; your call"]];
 const CHOICES = [["request", "Request intro"], ["in_touch", "Already in touch"], ["passed", "Already passed"], ["skip", "Skip"]];
-const STATUS = { waiting_on_founder: "Waiting on your email", with_alloy: "With Alloy", asked: "Asked", accepted: "Accepted", meeting: "Meeting", passed: "Passed" };
+const STATUS = { waiting_on_founder: "Waiting on your email", with_alloy: "With Alloy", asked: "Asked", accepted: "Accepted", meeting: "Meeting", passed: "Passed", not_available: "Not available" };
 
 // ---------- text safety ----------
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -618,6 +622,21 @@ async function stampChoice(id, field) {   // founder_opened_at / founder_sent_at
   if (!error) S.choices[id] = c;
   return !error;
 }
+// Did an intro that went out turn into a meeting? The founder says so here (founder_choices.outcome); founder_sync.py
+// moves the status to Meeting. Shown once the investor has been asked.
+function outcomeHtml(o) {
+  const st = S.status[o.id], out = S.choices[o.id]?.outcome;
+  if (!["asked", "accepted", "meeting"].includes(st)) return "";
+  return `<div class="outcome"><span class="meta">Did you meet?</span>
+    <button data-outcome="meeting" data-id="${o.id}" class="${out === "meeting" ? "on" : ""}">Meeting</button>
+    <button data-outcome="no_meeting" data-id="${o.id}" class="${out === "no_meeting" ? "on" : ""}">No meeting</button></div>`;
+}
+async function setOutcome(id, outcome) {
+  const c = { ...S.choices[id], outcome, outcome_at: new Date().toISOString(), updated_by: S.user.email, updated_at: new Date().toISOString() };
+  const { error } = await sb.from("founder_choices").upsert(c, { onConflict: "option_id" });
+  if (!error) S.choices[id] = c;
+  return !error;
+}
 function fwState(o) {
   const c = S.choices[o.id] || {}, st = S.status[o.id];
   if (st && st !== "waiting_on_founder") return ["Received by " + esc(first(o.alloy_person)), "asked"];
@@ -649,7 +668,7 @@ function renderTrack() {
       html += `<div class="email"><div class="head"><b>${esc(o.firm_name)} <span class="status ${cls}" style="margin-left:8px">${label}</span></b>
           <span class="meta">To ${esc(o.alloy_person)} (${esc(o.alloy_email)}) · for ${esc(o.investor_name)}</span><span>Subject: ${esc(e.subject)}</span></div>
         <details ${done ? "" : "open"}><summary class="meta" style="padding:10px 18px;cursor:pointer">Show the note</summary><div class="body">${e.html}</div></details>
-        <div class="foot">${done ? '<span class="note">Nothing more to do here.</span>' :
+        <div class="foot">${done ? '<span class="note">Nothing more to do here.</span>' + outcomeHtml(o) :
           `<a class="btn small primary" data-open="${o.id}" href="${mailto}">Open in my email</a><button class="small" data-copy="${o.id}">Copy formatted note</button>
            <button class="small" data-sent="${o.id}">Mark as sent</button>${attach ? '<span class="meta">Attach your deck before sending.</span>' : ""}`}</div></div>`;
     }
@@ -660,7 +679,7 @@ function renderTrack() {
       const st = S.status[o.id] || "with_alloy";
       html += `<div class="row" style="grid-template-columns:1.4fr 1fr .8fr;padding:18px 0"><div><div class="firm" style="font-size:19px;margin:0">${link(o.firm_name, o.firm_url)}</div>
         <div class="meta">${link(o.investor_name, o.investor_url)} · ${esc(o.alloy_person)} reaches out</div></div>
-        <div class="meta">${st === "with_alloy" ? "Draft with " + esc(first(o.alloy_person)) : ""}</div><div><span class="status ${st}">${STATUS[st]}</span></div></div>`;
+        <div class="meta">${st === "with_alloy" ? "Draft with " + esc(first(o.alloy_person)) : ""}</div><div><span class="status ${st}">${STATUS[st]}</span>${outcomeHtml(o)}</div></div>`;
     }
   }
   const noted = S.options.filter((o) => ["in_touch", "passed"].includes(S.choices[o.id]?.choice));
@@ -670,6 +689,8 @@ function renderTrack() {
   $("exportCsv").onclick = exportCsv;
   if ($("reviewNew")) $("reviewNew").onclick = () => { S.onlyNew = true; renderPick(); go("pick"); };
   el.querySelectorAll("[data-open]").forEach((a) => a.addEventListener("click", () => stampChoice(a.dataset.open, "founder_opened_at")));
+  el.querySelectorAll("[data-outcome]").forEach((b) => b.onclick = async () => {
+    if (await setOutcome(b.dataset.id, b.dataset.outcome)) renderTrack(); });
   el.querySelectorAll("[data-sent]").forEach((b) => b.onclick = async () => {
     if (await stampChoice(b.dataset.sent, "founder_sent_at")) { toast("Marked sent. We'll confirm when it arrives."); renderTrack(); }
     else toast("Couldn't save. Try again.");

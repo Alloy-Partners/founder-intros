@@ -59,6 +59,14 @@
   .status { margin: 22px 0 0; padding: 4px 0 4px 14px; border-left: 2px solid var(--line); }
   .status.ok { border-color: var(--ok); } .status.warn { border-color: var(--warn); } .status.bad { border-color: var(--bad); }
   .private { margin: 40px 0 0; }
+  .asks { margin: 0 0 44px; }
+  .ask { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; padding: 18px 0; border-top: 1px solid var(--line); }
+  .ask:last-child { border-bottom: 1px solid var(--line); }
+  .ask .who { font: 400 19px/1.3 "DM Sans", Arial, sans-serif; color: var(--ink); display: block; }
+  .ans { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+  .ans button { padding: 7px 12px; font-size: 13px; border-color: var(--line); }
+  .ans button.on { background: var(--ultramarine); color: #fff; border-color: var(--ultramarine); }
+  @media (max-width: 760px) { .ask { grid-template-columns: 1fr; gap: 10px; } }
   .private ul { margin: 8px 0 0; padding-left: 20px; } .private li { margin: 4px 0; }
   footer { font-size: 13px; color: var(--muted); padding: 30px 0; }
   .hide { display: none !important; }
@@ -87,6 +95,13 @@
       <h1 id="title">Share your LinkedIn connections</h1>
       <p class="lede">Alloy founders help each other raise. When another founder in the portfolio needs an intro to an
         investor you know, we'll ask you first, privately, and only you decide whether to make it.</p>
+    </div>
+
+    <div id="asks" class="asks hide">
+      <h2>Your intro asks</h2>
+      <p class="meta">Other Alloy founders asked about investors you know. Where does each one stand? One click; change it any time.
+        The founder who asked never sees a pass.</p>
+      <div id="askRows"></div>
     </div>
 
     <h2>How to get the file from LinkedIn</h2>
@@ -151,11 +166,34 @@ async function start(user) {
   if (!me) { $("none").classList.remove("hide"); return; }
   $("app").classList.remove("hide");
   $("title").textContent = `${me.person.split(" ")[0]}, share your LinkedIn connections`;
+  loadAsks();
   const { data: waiting } = await sb.storage.from("connections").list(S.email, { limit: 10 });
   if (waiting?.some((f) => f.id)) say("ok", "<b>Received.</b> We'll process it tonight. You can upload a newer export any time.");
   else if (me.ingested_at) say("ok", `<b>Received ${new Date(me.ingested_at).toLocaleDateString()}. Thank you.</b>`
     + (me.investor_matches != null ? ` ${me.investor_matches} of your connections work at investment firms.` : "")
     + " You can upload a newer export any time.");
+}
+
+// ---------- intro asks: where each ask from another founder stands (connector_asks, own rows only) ----------
+const ANSWERS = [["sent", "Sent", "You forwarded it"], ["yes", "They said yes", "They want to meet"],
+  ["pass", "Pass", "Not the right intro"], ["not_yet", "Not yet", "Still on your list"]];
+const escH = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+async function loadAsks() {
+  const { data } = await sb.from("connector_asks").select("*").order("asked_at", { ascending: false });
+  if (!data?.length) return;
+  $("asks").classList.remove("hide");
+  $("askRows").innerHTML = data.map((a) => `<div class="ask" data-id="${a.option_id}">
+    <div><span class="who">${escH(a.investor_name)}, ${escH(a.firm_name)}</span>
+      <span class="meta">For ${escH(a.company_name)} · asked by ${escH(a.lead_name.split(" ")[0])} ${new Date(a.asked_at).toLocaleDateString()}</span></div>
+    <div class="ans">${ANSWERS.map(([k, l, t]) => `<button data-a="${k}" title="${t}" class="${a.answer === k ? "on" : ""}">${l}</button>`).join("")}</div></div>`).join("");
+  $("askRows").querySelectorAll("[data-a]").forEach((b) => b.onclick = async () => {
+    const row = b.closest(".ask");
+    const { error } = await sb.from("connector_asks").update({ answer: b.dataset.a, answered_at: new Date().toISOString(), answer_source: "page" })
+      .eq("option_id", row.dataset.id);
+    if (error) { say("bad", "<b>That didn't save.</b> Refresh and try again."); return; }
+    row.querySelectorAll("[data-a]").forEach((x) => x.classList.toggle("on", x === b));
+  });
+  if (location.hash === "#asks") $("asks").scrollIntoView();
 }
 
 // ---------- the file: pull Connections.csv out of the archive, upload only that ----------
