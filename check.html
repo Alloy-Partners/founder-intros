@@ -76,6 +76,11 @@
   .namefix input:last-child { grid-column: 1 / -1; }
   .namefix input { padding: 6px 9px; font-size: 14px; }
   .person { font-size: 15px; } .why { font-size: 14px; line-height: 1.6; color: var(--body); }
+  .still { margin-top: 12px; padding: 12px 14px; border-left: 2px solid var(--ultramarine); background: var(--wash); border-radius: 0 6px 6px 0; }
+  .still b { display: block; color: var(--ink); font-weight: 500; margin-bottom: 4px; }
+  .still .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .still .opts button.on { background: var(--ultramarine); border-color: var(--ultramarine); color: #fff; }
+  .still input { margin-top: 10px; }
   .rate { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
   .rate button { padding: 7px 12px; font-size: 13px; border-color: var(--line); }
   .rate button.on { background: var(--ultramarine); color: #fff; border-color: var(--ultramarine); }
@@ -210,7 +215,10 @@ function founderCopy() {
 }
 
 // ---------- render ----------
-const visible = () => S.rows.filter((r) => S.filter === "all" || (S.filter === "todo" ? !r.rating : !!r.rating));
+// An investor our research couldn't place gets "Still there?" (rc_sync sets verify_q); open questions count as to-do
+const open = (r) => !!r.verify_q && !r.still_there;
+const visible = () => S.rows.filter((r) => S.filter === "all" || (S.filter === "todo" ? !r.rating || open(r) : !!r.rating))
+  .sort((a, b) => open(b) - open(a));
 const isNew = (r) => !r.rating && Date.now() - new Date(r.published_at) < 14 * 864e5 && S.rows.some((x) => x.published_at < r.published_at);
 
 // Who this row is: the rater's own fix wins; an email-only contact reads "Name not on file" + the address;
@@ -231,13 +239,22 @@ function personHtml(r) {
       <input type="text" data-k="title_edit" placeholder="Title" value="${esc(title)}" maxlength="160"></div>`;
 }
 
+function stillHtml(r) {
+  if (!r.verify_q) return "";
+  const opt = (v, l) => `<button data-st="${v}" class="${r.still_there === v ? "on" : ""}">${l}</button>`;
+  return `<div class="still"><b>Still there?</b>${esc(r.verify_q)}
+    <div class="opts">${opt("yes", "Yes, still there")}${opt("moved", "Moved")}${opt("unsure", "Not sure")}</div>
+    <input type="text" data-k="moved_to" maxlength="200" class="${r.still_there === "moved" ? "" : "hide"}"
+      placeholder="Where are they now, or who should we ask at the firm instead?" value="${esc(r.moved_to || "")}"></div>`;
+}
+
 function rowHtml(r, i) {
   const who = r.kind === "gap" ? `<div class="meta">No one at Alloy has a path here yet.</div>` : personHtml(r);
   const rate = SCALE.map(([c, l]) => `<button data-r="${c}" class="${r.rating === c ? "on" : ""} ${c === "dont_know" || c === "private" ? "neg" : ""}">${l}</button>`).join("");
   const gap = r.kind === "gap" ? `<input type="text" data-k="known_person" maxlength="120" placeholder="Know someone there? Their name" value="${esc(r.known_person || "")}">` : "";
   return `<div class="row ${i === S.focus ? "focus" : ""}" data-id="${r.id}" id="r-${r.id}">
     <div><div class="firm">${link(r.firm, r.firm_url)}</div>${who}${isNew(r) ? '<span class="tag">New</span>' : ""}</div>
-    <div class="why">${esc(r.why || "")}</div>
+    <div class="why">${esc(r.why || "")}${stillHtml(r)}</div>
     <div><div class="rate">${rate}</div><div class="extra">${gap}
       <textarea data-k="note" maxlength="500" rows="1" placeholder="Note (optional)" title="e.g. college roommate, worked together at X">${esc(r.note || "")}</textarea>
       <span class="saved"></span></div></div></div>`;
@@ -291,6 +308,14 @@ $("rows").addEventListener("click", async (e) => {
   row.querySelectorAll(".rate button").forEach((x) => x.classList.toggle("on", x.dataset.r === rating));
   S.focus = [...document.querySelectorAll(".row")].indexOf(row);
   if (S.filter === "todo" && rating) setTimeout(() => { render(); focusRow(S.focus); }, 350);   // rated rows leave the to-do view
+});
+$("rows").addEventListener("click", async (e) => {      // "Still there?" answers
+  const b = e.target.closest("[data-st]"); if (!b) return;
+  const row = b.closest(".row"), id = row.dataset.id, r = S.rows.find((x) => x.id === id);
+  const v = r.still_there === b.dataset.st ? null : b.dataset.st;
+  if (!(await save(id, { still_there: v, still_there_at: v ? new Date().toISOString() : null }, b))) return;
+  row.querySelectorAll("[data-st]").forEach((x) => x.classList.toggle("on", x.dataset.st === v));
+  const box = row.querySelector('[data-k="moved_to"]'); box.classList.toggle("hide", v !== "moved"); if (v === "moved") box.focus();
 });
 $("rows").addEventListener("click", (e) => {
   const b = e.target.closest("[data-edit]"); if (!b) return;
