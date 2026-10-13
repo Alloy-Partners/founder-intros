@@ -606,6 +606,14 @@ function asSentence(name, rest, nameH) {
   if (COUNT_NOUNS.test(lead)) return `${nameH || escT(name)} is ${/^[aeiou]/i.test(stripTags(low)) ? "an" : "a"} ${low}`;
   return `${nameH || escT(name)} builds ${low}`;
 }
+function linkOnce(h, name, url) {   // mirrors founder_emails._link_once: a founder-typed name never lands in a tag
+  const escName = escT(name); let depth = 0, done = false;
+  return h.split(/(<[^>]+>)/).map((part) => {
+    if (part.startsWith("<")) { depth += /^<a\b/i.test(part) ? 1 : /^<\/a>/i.test(part) ? -1 : 0; return part; }
+    if (!done && depth === 0 && part.includes(escName)) { done = true; return part.replace(escName, `<a href="${esc(url)}">${escName}</a>`); }
+    return part;
+  }).join("");
+}
 function story(mode, ceo, li) {
   const st = S.settings, outH = []; let raise = "";
   let comp = cleanHtml(st.blurb_company || st.blurb || "");
@@ -618,7 +626,7 @@ function story(mode, ceo, li) {
   }
   let team = cleanHtml(st.blurb_team || "");
   if (toText(team)) {
-    if (ceo && li && team.includes(ceo) && !team.includes(`>${ceo}<`)) team = team.replace(ceo, `<a href="${esc(li)}">${escT(ceo)}</a>`);
+    if (ceo && li) team = linkOnce(team, ceo, li);   // visible text only, never inside a tag
     if (team.startsWith("<p>")) team = "<p>On the team, " + team.slice(3);
     outH.push(team);
   }
@@ -651,7 +659,8 @@ function story(mode, ceo, li) {
     close = `They're raising ${main}` + (extra ? `, and ${extra}.` : ".") + " " + deckS;
   }
   outH.push(`<p>${close}</p>`);
-  return [outH.map((h) => toText(h)).filter(Boolean), outH.join("")];
+  const safe = outH.map((h) => cleanHtml(h));    // safety net: only the allowlisted tags and safe links survive
+  return [safe.map((h) => toText(h)).filter(Boolean), safe.join("")];
 }
 function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6 deck, close
   const c = S.choices[o.id] || {};
