@@ -566,6 +566,18 @@ function reasonPhrase(hook, firm) {   // mirrors founder_emails.reason_phrase
   pick = pick.replace(/^(the\s+)?firm['’]s\s+/i, "your ");
   return pick.slice(0, 140).replace(/[ ,;]+$/, "");
 }
+function reasonSentences(hook) {   // mirrors founder_emails.reason_sentences: full sentences, at most two
+  let h = String(hook || "").replace(/\s+/g, " ").trim();
+  if (!/^i thought of you\b/i.test(h)) return null;
+  h = h.split(/(?<=[.!?])\s+(?=[A-Z\[])/).slice(0, 2).join(" ").trim();
+  if (!/[.!?]$/.test(h)) h += ".";
+  let out = "", last = 0;
+  for (const m of h.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)) {
+    out += escT(h.slice(last, m.index)) + `<a href="${esc(m[2])}" target="_blank" rel="noopener">${escT(m[1])}</a>`;
+    last = m.index + m[0].length;
+  }
+  return [h.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"), out + escT(h.slice(last))];
+}
 function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6 deck, close
   const c = S.choices[o.id] || {};
   const send = c.send_mode || S.settings.default_send_mode || "alloy_direct";
@@ -581,12 +593,14 @@ function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6
     const hello = `Hi ${first(o.investor_name)} -`;
     const ask = `Would you be open to an intro to ${ceo}, ${title} of ${co}?`;
     const askH = `<p>Would you be open to an intro to ${ceoH}, ${escT(title)} of ${coH}?</p>`;
-    const why = reasonPhrase(o.email_hook, o.firm_name);
-    const line = why ? `I thought of you and ${o.firm_name} given ${why}.` : "";
+    const full = reasonSentences(o.email_hook);
+    const why = full ? "" : reasonPhrase(o.email_hook, o.firm_name);
+    const line = full ? full[0] : why ? `I thought of you and ${o.firm_name} given ${why}.` : "";
+    const lineH = full ? `<p>${full[1]}</p>` : line ? P(line) : "";
     const close = `If so, I'm happy to connect you and ${first(ceo)}.`;
     return { send, subject: `Intro to ${ceo}, ${title} of ${co}?`,
       text: [hello, ask, ...(line ? [line] : []), ...secs.map(([, t]) => t), deckT, close, `Thanks!\n\n${first(o.alloy_person)}`].join("\n\n"),
-      html: P(hello) + askH + (line ? P(line) : "") + secs.map(([h]) => h).join("") + deckH + P(close) + `<p>Thanks!</p><p>${escT(first(o.alloy_person))}</p>` };
+      html: P(hello) + askH + lineH + secs.map(([h]) => h).join("") + deckH + P(close) + `<p>Thanks!</p><p>${escT(first(o.alloy_person))}</p>` };
   }
   const hello = `Hi ${first(o.alloy_person)} -`;
   const ask = `Would you be open to introducing me to ${o.investor_name} at ${o.firm_name}? Below is a short note you can forward.`;
