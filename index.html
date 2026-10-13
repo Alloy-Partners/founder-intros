@@ -568,12 +568,6 @@ $("saveBlurb").onclick = async () => {
 
 // ---------- step 03: the exact emails ----------
 // Mirrors automation/founder_emails.build (tests/test_founder_sync.py pins the plain text).
-function deck(mode) {   // never silent: investors expect to know about the deck
-  if (mode === "link" && /^https?:\/\//i.test(S.settings.deck_link || "")) return [`You can see the deck here: ${S.settings.deck_link}`,
-    `<p>You can see the deck here: <a href="${esc(S.settings.deck_link)}">${escT(S.settings.deck_link)}</a></p>`];
-  if (mode === "attachment" && S.settings.deck_path) return ["The deck is attached.", "<p>The deck is attached.</p>"];
-  return ["Happy to share the deck on request.", "<p>Happy to share the deck on request.</p>"];
-}
 const P = (t) => `<p>${escT(t)}</p>`;
 function reasonPhrase(hook, firm) {   // mirrors founder_emails.reason_phrase
   let h = String(hook || "").trim().replace(/\.$/, "");
@@ -590,7 +584,7 @@ function reasonSentences(hook) {   // mirrors founder_emails.reason_sentences: f
   let h = String(hook || "").replace(/\s+/g, " ").trim();
   if (!/^i thought of you\b/i.test(h)) return null;
   h = h.split(/(?<=[.!?])\s+(?=[A-Z\[])/).slice(0, 2).join(" ").trim();
-  if (!/[.!?]$/.test(h)) h += ".";
+  if (!/[.!?]["”’']?$/.test(h)) h += ".";
   let out = "", last = 0;
   for (const m of h.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)) {
     out += escT(h.slice(last, m.index)) + `<a href="${esc(m[2])}" target="_blank" rel="noopener">${escT(m[1])}</a>`;
@@ -598,16 +592,76 @@ function reasonSentences(hook) {   // mirrors founder_emails.reason_sentences: f
   }
   return [h.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"), out + escT(h.slice(last))];
 }
+// Mirrors founder_emails.story (investornetwork): the founder's sections joined so the email reads like a person
+// wrote it: "Quick context:" sentence, "On the team," with the CEO linked, a lead-in before bullets, raise + deck
+// in one closing line (Mike 2026-10-13). Facts are re-arranged, never re-worded beyond these connectors.
+const COUNT_NOUNS = /\b(?:platform|company|startup|tool|app|system|marketplace|service|network|solution|product|engine|layer|copilot|assistant|agent)s?$/i;
+const stripTags = (h) => String(h || "").replace(/<[^>]+>/g, "").trim();
+function asSentence(name, rest, nameH) {
+  const plain = stripTags(rest), firstW = (plain.split(/\s+/)[0] || "");
+  if (plain.toLowerCase().startsWith(name.toLowerCase()) || /^(is|are|was|helps|builds|makes|turns|gives|we|it|they)\b/i.test(plain)) return rest;
+  const lead = plain.split(/[,:;(]|\s(?:for|that|which|to|co-created|built)\s/)[0].trim();
+  const keep = firstW === firstW.toUpperCase() || /^.[A-Z]/.test(firstW);
+  const low = keep ? rest : rest.replace(/^(\s*(?:<[^>]+>)*\s*)(\w)/, (m, a, b) => a + b.toLowerCase());
+  if (COUNT_NOUNS.test(lead)) return `${nameH || escT(name)} is ${/^[aeiou]/i.test(stripTags(low)) ? "an" : "a"} ${low}`;
+  return `${nameH || escT(name)} builds ${low}`;
+}
+function story(mode, ceo, li) {
+  const st = S.settings, outH = []; let raise = "";
+  let comp = cleanHtml(st.blurb_company || st.blurb || "");
+  if (toText(comp)) {
+    const m = comp.match(/^<p>\s*<(?:b|strong)>([^<]{1,80})<\/(?:b|strong)>\s*:\s*/i), ml = comp.match(/^<p>\s*(<a href="[^"]+">([^<]{1,80})<\/a>)\s*:\s*/i);
+    if (m) comp = "<p>Quick context: " + asSentence(m[1].trim() || S.company.name, comp.slice(m[0].length));
+    else if (ml) comp = "<p>Quick context: " + asSentence(ml[2].trim(), comp.slice(ml[0].length), ml[1]);
+    else if (comp.startsWith("<p>")) comp = "<p>Quick context: " + comp.slice(3);
+    outH.push(comp);
+  }
+  let team = cleanHtml(st.blurb_team || "");
+  if (toText(team)) {
+    if (ceo && li && team.includes(ceo) && !team.includes(`>${ceo}<`)) team = team.replace(ceo, `<a href="${esc(li)}">${escT(ceo)}</a>`);
+    if (team.startsWith("<p>")) team = "<p>On the team, " + team.slice(3);
+    outH.push(team);
+  }
+  const trac = cleanHtml(st.blurb_traction || "");
+  if (toText(trac)) {
+    const items = [...trac.matchAll(/<li>([\s\S]*?)<\/li>/gi)].map((x) => x[1]);
+    if (items.length) {
+      const keep = [];
+      for (let it of items) {
+        const plain = stripTags(it);
+        if (/^raising\b/i.test(plain) && !raise) { raise = it.trim(); continue; }
+        if (/^coverage\s*:/i.test(plain)) {
+          const parts = it.trim().replace(/^\s*coverage\s*:\s*/i, "").split(/,\s*(?![^<]*<\/a>)/).map((x) => x.trim()).filter(Boolean);
+          it = "Covered by " + (parts.length === 1 ? parts[0] : parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]);
+        }
+        keep.push(it.trim());
+      }
+      const pre = trac.includes("<ul>") ? trac.split("<ul>")[0] : "";
+      if (toText(pre)) outH.push(pre);
+      if (keep.length) outH.push("<p>A few things that stood out:</p><ul>" + keep.map((x) => `<li>${x}</li>`).join("") + "</ul>");
+    } else outH.push(trac);
+  }
+  const url = (st.deck_link || "").trim();
+  const link = mode === "link" && /^https?:\/\//i.test(url);
+  const deckS = link ? `The deck is <a href="${esc(url)}">here</a> if useful.` : mode === "attachment" && st.deck_path ? "The deck is attached." : "I can share the deck on request.";
+  let close = deckS;
+  if (raise) {
+    const r = raise.replace(/^\s*raising\s+/i, "").replace(/[. ]+$/, ""), i = r.indexOf(";");
+    const main = (i >= 0 ? r.slice(0, i) : r).trim(), extra = i >= 0 ? r.slice(i + 1).trim() : "";
+    close = `They're raising ${main}` + (extra ? `, and ${extra}.` : ".") + " " + deckS;
+  }
+  outH.push(`<p>${close}</p>`);
+  return [outH.map((h) => toText(h)).filter(Boolean), outH.join("")];
+}
 function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6 deck, close
   const c = S.choices[o.id] || {};
   const send = c.send_mode || S.settings.default_send_mode || "alloy_direct";
-  const [deckT, deckH] = deck(c.deck_mode || S.settings.deck_mode || "none");
   const ceo = S.settings.ceo_name || S.company.ceo_name || "our CEO", co = S.company.name, title = S.settings.ceo_title || "CEO";
   const origin = String(S.settings.origin ?? S.company.origin ?? "").trim().replace(/\.$/, "");
   const safe = (u) => /^https?:\/\//i.test((u || "").trim()) ? u.trim() : "";
   const li = safe(S.settings.ceo_linkedin || S.company.ceo_linkedin), site = safe(S.settings.company_website || S.company.website);
   const ceoH = li ? `<a href="${esc(li)}">${escT(ceo)}</a>` : escT(ceo), coH = site ? `<a href="${esc(site)}">${escT(co)}</a>` : escT(co);
-  const secs = sectionsOf(S.settings);
+  const [stT, stH] = story(c.deck_mode || S.settings.deck_mode || "none", ceo, li);
   if (send === "alloy_direct") {
     // Keep in step with founder_emails.opening / reason_phrase (investornetwork): the ask, then one casual reason.
     const hello = `Hi ${first(o.investor_name)} -`;
@@ -617,17 +671,17 @@ function emails(o) {   // 1 ask, 2-4 the founder's parts, 5 why this investor, 6
     const why = full ? "" : reasonPhrase(o.email_hook, o.firm_name);
     const line = full ? full[0] : why ? `I thought of you and ${o.firm_name} given ${why}.` : "";
     const lineH = full ? `<p>${full[1]}</p>` : line ? P(line) : "";
-    const close = `If so, I'm happy to connect you and ${first(ceo)}.`;
+    const close = `Happy to connect you and ${first(ceo)} if it's of interest.`;
     return { send, subject: `Intro to ${ceo}, ${title} of ${co}?`,
-      text: [hello, ask, ...(line ? [line] : []), ...secs.map(([, t]) => t), deckT, close, `Thanks!\n\n${first(o.alloy_person)}`].join("\n\n"),
-      html: P(hello) + askH + lineH + secs.map(([h]) => h).join("") + deckH + P(close) + `<p>Thanks!</p><p>${escT(first(o.alloy_person))}</p>` };
+      text: [hello, ask, ...(line ? [line] : []), ...stT, close, `Thanks!\n\n${first(o.alloy_person)}`].join("\n\n"),
+      html: P(hello) + askH + lineH + stH + P(close) + `<p>Thanks!</p><p>${escT(first(o.alloy_person))}</p>` };
   }
   const hello = `Hi ${first(o.alloy_person)} -`;
   const ask = `Would you be open to introducing me to ${o.investor_name} at ${o.firm_name}? Below is a short note you can forward.`;
   const toInv = `${first(o.investor_name)} -`;
   return { send, toEmail: o.alloy_email, subject: `Intro to ${o.investor_name} at ${o.firm_name}?`,
-    text: [hello, ask, toInv, ...secs.map(([, t]) => t), deckT, `Thank you!\n\n${first(ceo)}`].join("\n\n"),
-    html: P(hello) + P(ask) + P(toInv) + secs.map(([h]) => h).join("") + deckH + `<p>Thank you!</p><p>${escT(first(ceo))}</p>` };
+    text: [hello, ask, toInv, ...stT, `Thank you!\n\n${first(ceo)}`].join("\n\n"),
+    html: P(hello) + P(ask) + P(toInv) + stH + `<p>Thank you!</p><p>${escT(first(ceo))}</p>` };
 }
 function renderReview() {
   const list = requested();
