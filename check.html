@@ -76,6 +76,10 @@
   .namefix input:last-child { grid-column: 1 / -1; }
   .namefix input { padding: 6px 9px; font-size: 14px; }
   .person { font-size: 15px; } .why { font-size: 14px; line-height: 1.6; color: var(--body); }
+  .terms { margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .terms button.tedit { border: 0; background: none; padding: 0; margin-left: 6px; font-size: 12px; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .termsfix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+  .termsfix input { font-size: 13px; padding: 6px 8px; }
   .still { margin-top: 12px; padding: 12px 14px; border-left: 2px solid var(--ultramarine); background: var(--wash); border-radius: 0 6px 6px 0; }
   .still b { display: block; color: var(--ink); font-weight: 500; margin-bottom: 4px; }
   .still .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -239,6 +243,18 @@ function personHtml(r) {
       <input type="text" data-k="title_edit" placeholder="Title" value="${esc(title)}" maxlength="160"></div>`;
 }
 
+// Stage / size / lead for the firm (rc_sync fills terms_* from data/firm_terms.json). A connector's correction is
+// rare, so it's one quiet Edit link; what they type wins and is synced back with their name and the date.
+function termsHtml(r) {
+  const v = (k) => (r[k + "_edit"] || "").trim() || (r["terms_" + k] || "").trim();
+  const parts = [v("stages"), v("check"), v("leads")].filter(Boolean);
+  if (r.kind !== "confirm") return "";
+  const line = parts.length ? parts.map(esc).join(" · ") : "Stage, size and lead not known yet";
+  const inp = (k, ph) => `<input type="text" data-k="${k}_edit" maxlength="60" placeholder="${ph}" value="${esc(v(k))}">`;
+  return `<div class="terms">${line}<button class="tedit" data-tedit>Edit</button></div>
+    <div class="termsfix hide">${inp("stages", "Stage, e.g. Seed")}${inp("check", "Size, e.g. $1M-$3M")}${inp("leads", "Lead, e.g. Leads rounds")}</div>`;
+}
+
 function stillHtml(r) {
   if (!r.verify_q) return "";
   const opt = (v, l) => `<button data-st="${v}" class="${r.still_there === v ? "on" : ""}">${l}</button>`;
@@ -253,7 +269,7 @@ function rowHtml(r, i) {
   const rate = SCALE.map(([c, l]) => `<button data-r="${c}" class="${r.rating === c ? "on" : ""} ${c === "dont_know" || c === "private" ? "neg" : ""}">${l}</button>`).join("");
   const gap = r.kind === "gap" ? `<input type="text" data-k="known_person" maxlength="120" placeholder="Know someone there? Their name" value="${esc(r.known_person || "")}">` : "";
   return `<div class="row ${i === S.focus ? "focus" : ""}" data-id="${r.id}" id="r-${r.id}">
-    <div><div class="firm">${link(r.firm, r.firm_url)}</div>${who}${isNew(r) ? '<span class="tag">New</span>' : ""}</div>
+    <div><div class="firm">${link(r.firm, r.firm_url)}</div>${who}${termsHtml(r)}${isNew(r) ? '<span class="tag">New</span>' : ""}</div>
     <div class="why">${esc(r.why || "")}${stillHtml(r)}</div>
     <div><div class="rate">${rate}</div><div class="extra">${gap}
       <textarea data-k="note" maxlength="500" rows="1" placeholder="Note (optional)" title="e.g. college roommate, worked together at X">${esc(r.note || "")}</textarea>
@@ -318,6 +334,11 @@ $("rows").addEventListener("click", async (e) => {      // "Still there?" answer
   const box = row.querySelector('[data-k="moved_to"]'); box.classList.toggle("hide", v !== "moved"); if (v === "moved") box.focus();
 });
 $("rows").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-tedit]"); if (!b) return;
+  const box = b.closest(".row").querySelector(".termsfix"); box.classList.toggle("hide");
+  if (!box.classList.contains("hide")) box.querySelector("input").focus();
+});
+$("rows").addEventListener("click", (e) => {
   const b = e.target.closest("[data-edit]"); if (!b) return;
   const box = b.closest(".row").querySelector(".namefix"); box.classList.toggle("hide");
   if (!box.classList.contains("hide")) box.querySelector("input").focus();
@@ -328,6 +349,14 @@ $("rows").addEventListener("change", (e) => {
   if (k === "first" || k === "last") {                                   // first + last save together as one name
     const full = ["first", "last"].map((x) => row.querySelector(`[data-k="${x}"]`).value.trim()).filter(Boolean).join(" ");
     save(id, { name_edit: full || null }, e.target).then((ok) => ok && refreshPerson(row, id));
+    return;
+  }
+  if (["stages_edit", "check_edit", "leads_edit"].includes(k)) {
+    save(id, { [k]: e.target.value.trim() || null, terms_edited_at: new Date().toISOString() }, e.target).then((ok) => {
+      if (!ok) return;
+      const r = S.rows.find((x) => x.id === id), tmp = document.createElement("div"); tmp.innerHTML = termsHtml(r);
+      row.querySelector(".terms").replaceWith(tmp.querySelector(".terms"));
+    });
     return;
   }
   if (k === "title_edit") { save(id, { title_edit: e.target.value.trim() || null }, e.target).then((ok) => ok && refreshPerson(row, id)); return; }
