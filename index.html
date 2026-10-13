@@ -118,6 +118,10 @@
   .radio { display: flex; flex-direction: column; gap: 10px; }
   .radio label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
   .radio input { accent-color: var(--ultramarine); margin-top: 5px; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .filebtn { display: inline-block; font: 400 14px/1 "DM Sans", Arial, sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--ink);
+    border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+  .filebtn:hover, .filebtn:focus-visible { background: var(--ink); color: #fff; outline: none; }
   .radio small { display: block; color: var(--muted); font-size: 13px; }
 
   /* email preview */
@@ -241,7 +245,13 @@
           <label><input type="radio" name="deck" value="none"><span>No deck for now<small>Investors can ask for it</small></span></label>
         </div>
         <div id="deckLinkBox" style="margin-top:12px"><input type="url" id="deckLink" placeholder="https://docsend.com/view/..."></div>
-        <div id="deckFileBox" class="hide" style="margin-top:12px"><input type="file" id="deckFile" accept="application/pdf"> <span id="deckFileName" class="meta"></span></div>
+        <div id="deckFileBox" class="hide" style="margin-top:12px">
+          <input type="file" id="deckFile" accept=".pdf,application/pdf" class="visually-hidden">
+          <label for="deckFile" class="filebtn" role="button" tabindex="0">Choose PDF</label>
+          <span id="deckPicked" class="meta" style="margin-left:10px"></span>
+          <p class="meta" id="deckFileName" style="margin:8px 0 0"></p>
+          <p class="meta" style="margin:4px 0 0">PDF only, up to 25 MB. Deck in Google Slides, PowerPoint or Keynote? Export it as a PDF, or use Share a link.</p>
+        </div>
         <p class="meta" id="deckDate" style="margin:10px 0 0"></p>
       </fieldset>
 
@@ -500,7 +510,8 @@ function renderBlurb() {
   document.querySelectorAll('input[name="deck"]').forEach((r) => r.checked = r.value === (s.deck_mode || "link"));
   document.querySelectorAll('input[name="send"]').forEach((r) => r.checked = r.value === (s.default_send_mode || "alloy_direct"));
   $("deckLink").value = s.deck_link || "";
-  $("deckFileName").textContent = s.deck_path ? `On file: ${s.deck_path.split("/").pop()}` : "";
+  $("deckFileName").textContent = s.deck_path ? `On file: ${s.deck_path.split("/").pop().replace(/^\d{4}-\d{2}-\d{2}-/, "")}` : "";
+  $("deckPicked").textContent = ""; $("deckFile").value = "";
   const dd = s.deck_updated_at && new Date(s.deck_updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   $("deckDate").textContent = dd ? `Last updated ${dd}. If you've changed the deck since, update the link or file above.` : "";
   deckBoxes(); sendWho();
@@ -518,6 +529,15 @@ function deckBoxes() {
   $("deckLinkBox").classList.toggle("hide", m !== "link"); $("deckFileBox").classList.toggle("hide", m !== "attachment");
 }
 document.querySelectorAll('input[name="deck"]').forEach((r) => r.onchange = deckBoxes);
+document.querySelector('label[for="deckFile"]').onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("deckFile").click(); } };
+$("deckFile").onchange = () => {   // say what was picked right away; it uploads when they confirm
+  const f = $("deckFile").files[0];
+  if (!f) { $("deckPicked").textContent = ""; return; }
+  const mb = (f.size / 1048576).toFixed(1), size = f.size < 104858 ? `${Math.max(1, Math.round(f.size / 1024))} KB` : `${mb} MB`;
+  if (!/\.pdf$/i.test(f.name) && f.type !== "application/pdf") { $("deckPicked").textContent = `${f.name} isn't a PDF. Export it as a PDF first.`; $("deckFile").value = ""; return; }
+  if (f.size > 25 * 1048576) { $("deckPicked").textContent = `${f.name} is ${mb} MB; the limit is 25 MB.`; $("deckFile").value = ""; return; }
+  $("deckPicked").textContent = `Ready: ${f.name} (${size}). It uploads when you confirm below.`;
+};
 $("saveBlurb").onclick = async () => {
   const parts = Object.fromEntries(EDITORS.map((e) => [e.dataset.key, cleanHtml(e.innerHTML) || null]));
   const s = { ...S.settings, company_slug: S.company.slug, ...parts, origin: $("origin").value.trim() || null, blurb_approved_at: new Date().toISOString(),
@@ -531,7 +551,7 @@ $("saveBlurb").onclick = async () => {
   if (s.deck_mode === "link" && s.deck_link && !/^https?:\/\//.test(s.deck_link)) { toast("The deck link should start with https://"); return; }
   const file = $("deckFile").files[0];
   if (s.deck_mode === "attachment" && file) {
-    if (file.type !== "application/pdf") { toast("Please attach a PDF."); return; }
+    if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) { toast("Please attach a PDF."); return; }
     const path = `${S.company.slug}/${new Date().toISOString().slice(0, 10)}-${file.name.replace(/[^\w.-]+/g, "_")}`;
     const up = await sb.storage.from("decks").upload(path, file, { contentType: "application/pdf", upsert: true });
     if (up.error) { toast("The upload didn't work. Try again, or share a link instead."); return; }
